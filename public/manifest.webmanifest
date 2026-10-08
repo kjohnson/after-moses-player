@@ -1,0 +1,15 @@
+{
+    "name": "After Moses",
+    "short_name": "After Moses",
+    "description": "Listen to After Moses by Michael F. Kane.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#120d1c",
+    "theme_color": "#120d1c",
+    "icons": [
+        { "src": "/images/icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "/images/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    ]
+}

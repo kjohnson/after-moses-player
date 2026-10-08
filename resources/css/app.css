@@ -1,0 +1,137 @@
+@import 'tailwindcss';
+
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-night-950: #120d1c;
+    --color-night-900: #1c1528;
+    --color-night-800: #2a2038;
+
+    --color-sand-50: #fbf6f1;
+    --color-sand-200: #ecdccf;
+    --color-sand-300: #dcc3b1;
+    --color-sand-400: #b89e8e;
+    --color-sand-500: #8f7a6f;
+
+    --color-ember-400: #f19a6b;
+    --color-ember-500: #ec7f4f;
+}
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+        overscroll-behavior: none;
+    }
+}
+
+@layer components {
+    .tap {
+        @apply cursor-pointer transition active:scale-95 disabled:opacity-30 disabled:active:scale-100;
+        touch-action: manipulation;
+    }
+
+    .tap:focus-visible {
+        @apply outline-2 outline-offset-2 outline-ember-400;
+    }
+
+    .pill {
+        @apply flex flex-col items-center rounded-2xl bg-white/5 py-2.5 font-semibold ring-1 ring-white/10;
+    }
+
+    .pill[data-active] {
+        @apply bg-ember-500/15 text-ember-400 ring-ember-500/40;
+    }
+
+    .pill-label {
+        @apply mt-0.5 text-[0.7rem] font-medium tracking-wide text-sand-400 uppercase;
+    }
+
+    .chapter-row[aria-current='true'] {
+        @apply bg-white/8;
+    }
+
+    .chapter-row[aria-current='true'] .chapter-number {
+        @apply bg-ember-500 text-night-950;
+    }
+
+    /* Range input styled as a progress bar with a thumb. */
+    .scrubber {
+        --progress: 0%;
+        --buffered: 0%;
+        @apply block h-8 w-full cursor-pointer appearance-none bg-transparent;
+        touch-action: none;
+    }
+
+    .scrubber::-webkit-slider-runnable-track {
+        @apply h-1.5 rounded-full;
+        background: linear-gradient(
+            to right,
+            var(--color-ember-500) var(--progress),
+            rgb(255 255 255 / 0.25) var(--progress) var(--buffered),
+            rgb(255 255 255 / 0.12) var(--buffered)
+        );
+    }
+
+    .scrubber::-moz-range-track {
+        @apply h-1.5 rounded-full;
+        background: linear-gradient(
+            to right,
+            var(--color-ember-500) var(--progress),
+            rgb(255 255 255 / 0.25) var(--progress) var(--buffered),
+            rgb(255 255 255 / 0.12) var(--buffered)
+        );
+    }
+
+    .scrubber::-webkit-slider-thumb {
+        @apply -mt-[5px] size-4 appearance-none rounded-full border-0 bg-sand-50 shadow;
+    }
+
+    .scrubber::-moz-range-thumb {
+        @apply size-4 rounded-full border-0 bg-sand-50 shadow;
+    }
+
+    .scrubber:focus-visible {
+        @apply outline-none;
+    }
+
+    .scrubber:focus-visible::-webkit-slider-thumb {
+        @apply ring-4 ring-ember-400/50;
+    }
+
+    /* Bottom sheet built on <dialog>. */
+    .sheet {
+        @apply m-0 mt-auto max-h-[80dvh] w-full max-w-none overflow-y-auto rounded-t-3xl bg-night-900 text-sand-50 ring-1 ring-white/10;
+        transform: translateY(100%);
+        transition:
+            transform 0.25s ease-out,
+            overlay 0.25s allow-discrete,
+            display 0.25s allow-discrete;
+    }
+
+    .sheet[open] {
+        transform: translateY(0);
+
+        @starting-style {
+            transform: translateY(100%);
+        }
+    }
+
+    .sheet::backdrop {
+        background: rgb(0 0 0 / 0);
+        transition:
+            background 0.25s,
+            overlay 0.25s allow-discrete,
+            display 0.25s allow-discrete;
+    }
+
+    .sheet[open]::backdrop {
+        background: rgb(0 0 0 / 0.6);
+
+        @starting-style {
+            background: rgb(0 0 0 / 0);
+        }
+    }
+}

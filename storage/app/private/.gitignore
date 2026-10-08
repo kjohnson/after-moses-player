@@ -1,0 +1,4 @@
+*
+!.gitignore
+!audio/
+!audio/*.mp3
