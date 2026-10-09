@@ -62,6 +62,21 @@ return [
             'file' => 'chapter-03-train-to-churchill.mp3',
             'duration' => 2665.90,
         ],
+        [
+            'title' => 'The Hawthorne Pact',
+            'file' => 'chapter-04-the-hawthorne-pact.mp3',
+            'duration' => 1900.86,
+        ],
+        [
+            'title' => 'Bright Crater Diagnosis',
+            'file' => 'chapter-05-bright-crater-diagnosis.mp3',
+            'duration' => 2513.93,
+        ],
+        [
+            'title' => 'Islands in the Night',
+            'file' => 'chapter-06-islands-in-the-night.mp3',
+            'duration' => 1583.73,
+        ],
     ],
 
 ];
