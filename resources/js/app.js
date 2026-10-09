@@ -3,11 +3,13 @@ const SPEEDS = [0.8, 1, 1.2, 1.5, 1.75, 2];
 const SLEEP_OPTIONS = [null, 15, 30, 45, 60, 'chapter'];
 const BACK_SECONDS = 15;
 const FORWARD_SECONDS = 30;
+const FOLLOW_PAUSE_MS = 6000;
 
 const { book, chapters } = JSON.parse(document.getElementById('audiobook-data').textContent);
 
 const audio = document.getElementById('audio');
 const sheet = document.getElementById('chapters');
+const readerEl = document.getElementById('reader');
 const $ = (selector) => document.querySelector(selector);
 const ui = {
     toggle: $('[data-action="toggle"]'),
@@ -23,6 +25,11 @@ const ui = {
     chapterTitle: $('[data-bind="chapter-title"]'),
     speed: $('[data-bind="speed"]'),
     sleep: $('[data-bind="sleep"]'),
+    player: $('#player'),
+    textButton: $('[data-action="text"]'),
+    followButton: $('[data-action="follow"]'),
+    coverView: $('[data-view="cover"]'),
+    textView: $('[data-view="text"]'),
     icons: {
         play: $('[data-icon="play"]'),
         pause: $('[data-icon="pause"]'),
@@ -34,6 +41,7 @@ const state = {
     chapter: 0,
     positions: {},
     speed: 1,
+    view: 'cover',
     sleep: null,
     sleepDeadline: null,
     sleepInterval: null,
@@ -55,6 +63,7 @@ function load() {
             state.chapter = Math.min(Math.max(saved.chapter ?? 0, 0), chapters.length - 1);
             state.positions = saved.positions ?? {};
             state.speed = SPEEDS.includes(saved.speed) ? saved.speed : 1;
+            state.view = saved.view === 'text' ? 'text' : 'cover';
         }
     } catch {
         // Storage unavailable or corrupt; start fresh.
@@ -80,7 +89,7 @@ function save(force = false) {
     try {
         localStorage.setItem(
             STORAGE_KEY,
-            JSON.stringify({ chapter: state.chapter, positions: state.positions, speed: state.speed }),
+            JSON.stringify({ chapter: state.chapter, positions: state.positions, speed: state.speed, view: state.view }),
         );
     } catch {
         // Ignore quota or privacy-mode errors.
@@ -126,6 +135,7 @@ function renderChapter() {
     });
 
     renderChapterProgress();
+    renderView();
     updateMediaSession();
 }
 
@@ -203,6 +213,250 @@ function flash(message) {
 }
 
 // ---------------------------------------------------------------------------
+// Follow-along text
+// ---------------------------------------------------------------------------
+
+const reader = {
+    chapter: null,
+    timings: null,
+    words: [],
+    current: -1,
+    pausedUntil: 0,
+    frame: null,
+};
+
+const textRequests = new Map();
+
+function isReading() {
+    return state.view === 'text' && chapters[state.chapter].hasText;
+}
+
+function renderView() {
+    const reading = isReading();
+
+    ui.textButton.classList.toggle('hidden', !chapters[state.chapter].hasText);
+    ui.textButton.setAttribute('aria-pressed', String(reading));
+    ui.player.toggleAttribute('data-reading', reading);
+    ui.coverView.classList.toggle('hidden', reading);
+    ui.textView.classList.toggle('hidden', !reading);
+
+    if (reading) {
+        loadReader();
+    }
+
+    syncReaderLoop();
+}
+
+function toggleView() {
+    state.view = state.view === 'text' ? 'cover' : 'text';
+    reader.pausedUntil = 0;
+    renderView();
+    highlightWord({ force: true, scroll: 'instant' });
+    save(true);
+}
+
+function fetchText(index) {
+    if (!textRequests.has(index)) {
+        const request = fetch(`/text/${index + 1}`, { headers: { Accept: 'application/json' } }).then((response) => {
+            if (!response.ok) {
+                throw new Error(`Text request failed: ${response.status}`);
+            }
+
+            return response.json();
+        });
+
+        // Let a failed request be retried next time the text is opened.
+        request.catch(() => textRequests.delete(index));
+        textRequests.set(index, request);
+    }
+
+    return textRequests.get(index);
+}
+
+async function loadReader() {
+    const index = state.chapter;
+
+    if (reader.chapter === index) {
+        return;
+    }
+
+    reader.chapter = index;
+    reader.timings = null;
+    reader.words = [];
+    reader.current = -1;
+    readerEl.replaceChildren(readerStatus('Loading text…'));
+
+    try {
+        const text = await fetchText(index);
+
+        if (reader.chapter === index) {
+            renderReader(text);
+        }
+    } catch {
+        if (reader.chapter === index) {
+            reader.chapter = null;
+            readerEl.replaceChildren(readerStatus('Couldn’t load the text'));
+        }
+    }
+}
+
+function readerStatus(message) {
+    const status = document.createElement('p');
+    status.className = 'reader-status';
+    status.textContent = message;
+
+    return status;
+}
+
+function renderReader({ blocks, timings }) {
+    const fragment = document.createDocumentFragment();
+    const words = [];
+
+    for (const block of blocks) {
+        if (block.tag === 'break') {
+            const ornament = document.createElement('p');
+            ornament.className = 'reader-break';
+            ornament.setAttribute('aria-hidden', 'true');
+            ornament.textContent = '* * *';
+            fragment.append(ornament);
+            continue;
+        }
+
+        const element = document.createElement(block.tag === 'heading' ? 'h2' : 'p');
+
+        if (block.tag === 'quote') {
+            element.className = 'reader-quote';
+        }
+
+        block.words.forEach((word, position) => {
+            const span = document.createElement('span');
+            span.dataset.w = words.length;
+            span.textContent = word;
+            words.push(span);
+            element.append(span, position < block.words.length - 1 ? ' ' : '');
+        });
+
+        fragment.append(element);
+    }
+
+    readerEl.replaceChildren(fragment);
+    reader.timings = timings;
+    reader.words = words;
+    reader.current = -1;
+    readerEl.scrollTop = 0;
+    highlightWord({ force: true, scroll: 'instant' });
+}
+
+/**
+ * Index of the word being spoken at the given time: the last word that has started.
+ */
+function wordAt(time) {
+    const timings = reader.timings;
+    let low = 0;
+    let high = timings.length / 2 - 1;
+    let found = -1;
+
+    while (low <= high) {
+        const mid = (low + high) >> 1;
+
+        if (timings[mid * 2] <= time) {
+            found = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+
+    return found;
+}
+
+function highlightWord({ force = false, scroll = 'smooth' } = {}) {
+    if (!isReading() || !reader.timings || reader.chapter !== state.chapter) {
+        return;
+    }
+
+    // Pick auto-scroll back up once the listener has stopped scrolling for a while.
+    if (reader.pausedUntil && isFollowing()) {
+        reader.pausedUntil = 0;
+        ui.followButton.classList.add('hidden');
+        force = true;
+    }
+
+    const index = wordAt(currentTime());
+
+    if (index === reader.current && !force) {
+        return;
+    }
+
+    const previous = reader.words[reader.current];
+    const next = reader.words[index];
+
+    if (previous) {
+        previous.classList.remove('is-current');
+    }
+
+    if (previous?.parentElement !== next?.parentElement) {
+        previous?.parentElement.classList.remove('is-current-block');
+        next?.parentElement.classList.add('is-current-block');
+    }
+
+    next?.classList.add('is-current');
+    reader.current = index;
+
+    if (next && isFollowing()) {
+        keepInView(next, scroll);
+    }
+}
+
+function isFollowing() {
+    return Date.now() >= reader.pausedUntil;
+}
+
+/**
+ * Keep the spoken word around a third of the way down, scrolling only once
+ * it drifts out of the comfortable reading band.
+ */
+function keepInView(word, behavior) {
+    const view = readerEl.clientHeight;
+    const offset = word.offsetTop - readerEl.scrollTop;
+
+    if (behavior === 'instant' || offset < view * 0.15 || offset > view * 0.6) {
+        readerEl.scrollTo({ top: word.offsetTop - view / 3, behavior });
+    }
+}
+
+function pauseFollowing() {
+    reader.pausedUntil = Date.now() + FOLLOW_PAUSE_MS;
+    ui.followButton.classList.remove('hidden');
+}
+
+function resumeFollowing() {
+    reader.pausedUntil = 0;
+    ui.followButton.classList.add('hidden');
+    highlightWord({ force: true });
+}
+
+/**
+ * Word timings are finer than "timeupdate" (about 4 per second), so follow
+ * along every frame while the text is on screen and the audio is playing.
+ */
+function syncReaderLoop() {
+    const shouldRun = isReading() && !audio.paused && document.visibilityState === 'visible';
+
+    if (shouldRun && reader.frame === null) {
+        const tick = () => {
+            highlightWord();
+            reader.frame = requestAnimationFrame(tick);
+        };
+
+        reader.frame = requestAnimationFrame(tick);
+    } else if (!shouldRun && reader.frame !== null) {
+        cancelAnimationFrame(reader.frame);
+        reader.frame = null;
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Playback
 // ---------------------------------------------------------------------------
 
@@ -271,6 +525,7 @@ function seekTo(seconds) {
 
     renderTime();
     renderChapterProgress();
+    highlightWord({ force: true });
     updatePositionState();
 }
 
@@ -396,19 +651,25 @@ function registerMediaSessionHandlers() {
 audio.addEventListener('loadedmetadata', () => {
     applyPendingSeek();
     renderTime();
+    highlightWord({ force: true });
     updatePositionState();
 });
 
 audio.addEventListener('timeupdate', () => {
     renderTime();
     renderChapterProgress();
+    highlightWord();
     save();
 });
 
 audio.addEventListener('progress', renderTime);
-audio.addEventListener('play', renderPlayState);
+audio.addEventListener('play', () => {
+    renderPlayState();
+    syncReaderLoop();
+});
 audio.addEventListener('pause', () => {
     renderPlayState();
+    syncReaderLoop();
     save(true);
 });
 
@@ -493,6 +754,19 @@ ui.seek.addEventListener('change', () => {
 document.addEventListener('click', (event) => {
     const action = event.target.closest('[data-action]')?.dataset.action;
     const chapterRow = event.target.closest('[data-chapter]');
+    const word = event.target.closest('[data-w]');
+
+    if (word && reader.timings) {
+        // Selecting text shouldn't also jump the audio.
+        if (!window.getSelection()?.isCollapsed) {
+            return;
+        }
+
+        resumeFollowing();
+        seekTo(reader.timings[Number(word.dataset.w) * 2]);
+
+        return;
+    }
 
     if (chapterRow) {
         const index = Number(chapterRow.dataset.chapter);
@@ -530,10 +804,27 @@ document.addEventListener('click', (event) => {
         case 'sleep':
             cycleSleep();
             break;
+        case 'text':
+            toggleView();
+            break;
+        case 'follow':
+            resumeFollowing();
+            break;
         case 'open-chapters':
             renderChapterProgress();
             sheet.showModal();
             break;
+    }
+});
+
+// Reading ahead or back pauses auto-scroll for a moment.
+for (const event of ['wheel', 'touchmove']) {
+    readerEl.addEventListener(event, pauseFollowing, { passive: true });
+}
+
+readerEl.addEventListener('keydown', (event) => {
+    if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'].includes(event.code)) {
+        pauseFollowing();
     }
 });
 
@@ -563,6 +854,8 @@ document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
         save(true);
     }
+
+    syncReaderLoop();
 });
 
 window.addEventListener('pagehide', () => save(true));

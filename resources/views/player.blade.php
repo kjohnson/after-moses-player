@@ -43,17 +43,28 @@
                     <p class="text-xs font-medium tracking-[0.2em] text-sand-400 uppercase">Audiobook</p>
                     <h1 class="truncate text-base font-semibold">{{ $book['title'] }}</h1>
                 </div>
-                <button
-                    type="button"
-                    data-action="open-chapters"
-                    class="tap -mr-2 flex size-11 items-center justify-center rounded-full text-sand-200"
-                    aria-label="Show chapters"
-                >
-                    <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
-                </button>
+                <div class="-mr-2 flex items-center">
+                    <button
+                        type="button"
+                        data-action="text"
+                        class="tap reader-toggle hidden size-11 items-center justify-center rounded-full text-sand-200"
+                        aria-label="Follow along in the text"
+                        aria-pressed="false"
+                    >
+                        <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2Zm0 0v13"/></svg>
+                    </button>
+                    <button
+                        type="button"
+                        data-action="open-chapters"
+                        class="tap flex size-11 items-center justify-center rounded-full text-sand-200"
+                        aria-label="Show chapters"
+                    >
+                        <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
+                    </button>
+                </div>
             </header>
 
-            <div class="flex flex-1 flex-col justify-center py-4">
+            <div class="flex flex-1 flex-col justify-center py-4" data-view="cover">
                 <img
                     src="{{ $book['cover'] }}"
                     alt="{{ $book['title'] }} cover art"
@@ -67,6 +78,17 @@
                     <h2 class="mt-1 text-2xl leading-tight font-semibold text-balance" data-bind="chapter-title">{{ $chapters->first()['title'] }}</h2>
                     <p class="mt-1 text-sm text-sand-400">{{ $book['author'] }} · Read by {{ $book['narrator'] }}</p>
                 </div>
+            </div>
+
+            {{-- Follow-along text --}}
+            <div class="relative -mx-6 hidden min-h-0 flex-1" data-view="text">
+                <div id="reader" class="reader" aria-label="Chapter text" tabindex="-1">
+                    <p class="reader-status" data-bind="reader-status">Loading text…</p>
+                </div>
+                <button type="button" data-action="follow" class="tap reader-follow hidden" aria-label="Back to narration">
+                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                    Back to narration
+                </button>
             </div>
 
             <section aria-label="Playback">

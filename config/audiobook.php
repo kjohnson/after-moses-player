@@ -37,6 +37,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Follow-Along Text
+    |--------------------------------------------------------------------------
+    |
+    | The ebook lives on the same private disk as the audio. Running
+    | "php artisan audiobook:sync" matches each chapter's text in the ebook
+    | against a WhisperX transcript of its audio (in "transcripts") and
+    | writes word timings to the "text" folder, which the player reads.
+    |
+    | Chapters are found in the ebook by their "Chapter N" title. Add an
+    | "epub" key to a chapter below to point at a specific file instead.
+    |
+    */
+
+    'ebook' => env('AUDIOBOOK_EBOOK', 'ebook/After Moses.epub'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Chapters
     |--------------------------------------------------------------------------
     |

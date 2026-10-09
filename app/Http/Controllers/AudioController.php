@@ -16,7 +16,7 @@ class AudioController extends Controller
      */
     public function stream(Request $request, int $chapter): BinaryFileResponse|RedirectResponse
     {
-        $file = $this->chapterFile($chapter);
+        $file = $this->chapterConfig($chapter)['file'];
 
         abort_unless($this->isPlayerRequest($request, ['audio', 'video', 'empty']), 403);
 
@@ -43,7 +43,7 @@ class AudioController extends Controller
      */
     public function refresh(Request $request, int $chapter): JsonResponse
     {
-        $this->chapterFile($chapter);
+        $this->chapterConfig($chapter);
 
         abort_unless($this->isPlayerRequest($request, ['empty']), 403);
 
@@ -62,39 +62,5 @@ class AudioController extends Controller
             now()->addMinutes(config('audiobook.url_lifetime')),
             ['chapter' => $chapter],
         );
-    }
-
-    /**
-     * Resolve a chapter's file name, or abort if the chapter doesn't exist.
-     */
-    private function chapterFile(int $chapter): string
-    {
-        $chapters = array_values(config('audiobook.chapters'));
-
-        abort_unless(isset($chapters[$chapter - 1]), 404);
-
-        return $chapters[$chapter - 1]['file'];
-    }
-
-    /**
-     * Whether the request looks like it came from the player rather than a
-     * pasted link, a hotlinking site, or a script.
-     *
-     * Browsers send Fetch Metadata headers automatically. Older browsers that
-     * don't send them at all are let through so they can still listen.
-     *
-     * @param  array<int, string>  $allowedDestinations
-     */
-    private function isPlayerRequest(Request $request, array $allowedDestinations): bool
-    {
-        $site = $request->header('Sec-Fetch-Site');
-        $destination = $request->header('Sec-Fetch-Dest');
-
-        if ($site === null && $destination === null) {
-            return true;
-        }
-
-        return in_array($site, ['same-origin', 'none'], true)
-            && in_array($destination, $allowedDestinations, true);
     }
 }

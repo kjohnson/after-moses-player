@@ -15,7 +15,10 @@ class PlayerTest extends TestCase
             ->assertSee('After Moses')
             ->assertSee('Europan Extraction')
             ->assertSee('Rings of Interferance')
-            ->assertSee('Train to Churchill');
+            ->assertSee('Train to Churchill')
+            ->assertSee('The Hawthorne Pact')
+            ->assertSee('Bright Crater Diagnosis')
+            ->assertSee('Islands in the Night');
     }
 
     public function test_player_links_to_signed_audio_urls_instead_of_files(): void

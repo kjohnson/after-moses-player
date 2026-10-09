@@ -135,3 +135,72 @@
         }
     }
 }
+
+@layer components {
+    .reader-toggle:not(.hidden) {
+        @apply flex;
+    }
+
+    .reader-toggle[aria-pressed='true'] {
+        @apply bg-ember-500/15 text-ember-400;
+    }
+
+    /* Reading view: the player fills the screen and the text scrolls inside it. */
+    #player[data-reading] {
+        @apply h-dvh;
+    }
+
+    .reader {
+        @apply relative h-full overflow-y-auto px-6 py-6 font-serif text-lg leading-relaxed text-sand-200/80 select-text;
+        mask-image: linear-gradient(to bottom, transparent, black 1.5rem, black calc(100% - 2.5rem), transparent);
+        overscroll-behavior: contain;
+    }
+
+    .reader > * {
+        @apply mx-auto max-w-prose;
+    }
+
+    .reader p + p {
+        @apply mt-4;
+    }
+
+    .reader h2 {
+        @apply mb-6 font-sans text-xl font-semibold text-sand-50;
+    }
+
+    .reader .reader-quote {
+        @apply pl-4 italic;
+    }
+
+    .reader .reader-quote + .reader-quote {
+        @apply mt-2;
+    }
+
+    .reader .reader-break {
+        @apply my-8 text-center tracking-[0.5em] text-sand-500;
+    }
+
+    .reader .reader-status {
+        @apply py-12 text-center font-sans text-sm text-sand-400;
+    }
+
+    .reader [data-w] {
+        @apply cursor-pointer rounded-sm transition-colors duration-300;
+    }
+
+    .reader .is-current-block {
+        @apply text-sand-50;
+    }
+
+    .reader [data-w].is-current {
+        @apply bg-ember-500/10 text-ember-400;
+    }
+
+    .reader-follow {
+        @apply absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-night-800 px-4 py-2 text-sm font-semibold text-ember-400 shadow-lg ring-1 ring-white/10;
+    }
+
+    .reader-follow:not(.hidden) {
+        @apply flex;
+    }
+}

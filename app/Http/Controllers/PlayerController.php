@@ -20,6 +20,7 @@ class PlayerController extends Controller
                 'title' => $chapter['title'],
                 'duration' => $chapter['duration'],
                 'url' => AudioController::signedUrl($index + 1),
+                'hasText' => TextController::exists($index + 1),
             ]);
 
         return view('player', [
