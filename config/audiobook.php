@@ -26,12 +26,15 @@ return [
     | signed route; on S3-compatible object storage (e.g. a private Laravel
     | Cloud bucket) listeners are redirected to a short-lived pre-signed URL.
     |
+    | Leave AUDIOBOOK_DISK unset to use the default disk: "local" here, and
+    | the bucket attached as the default disk on Laravel Cloud.
+    |
     | Signed player URLs expire after "url_lifetime" minutes. The player
     | fetches a fresh one automatically if a listener comes back later.
     |
     */
 
-    'disk' => env('AUDIOBOOK_DISK', 'local'),
+    'disk' => env('AUDIOBOOK_DISK'),
 
     'url_lifetime' => (int) env('AUDIOBOOK_URL_LIFETIME', 360),
 

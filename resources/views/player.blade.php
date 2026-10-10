@@ -142,22 +142,6 @@
                         <svg class="size-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 5a1 1 0 0 1 1 1v12a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1ZM5.5 5.4l9.6 5.8a1 1 0 0 1 0 1.72l-9.6 5.8A1 1 0 0 1 4 17.8V6.2a1 1 0 0 1 1.5-.86Z"/></svg>
                     </button>
                 </div>
-
-                {{-- Secondary controls --}}
-                <div class="mt-6 grid grid-cols-3 gap-3 text-sm">
-                    <button type="button" data-action="speed" class="tap pill" aria-label="Playback speed">
-                        <span data-bind="speed">1×</span>
-                        <span class="pill-label">Speed</span>
-                    </button>
-                    <button type="button" data-action="sleep" class="tap pill" aria-label="Sleep timer">
-                        <span data-bind="sleep">Off</span>
-                        <span class="pill-label">Sleep</span>
-                    </button>
-                    <button type="button" data-action="open-chapters" class="tap pill" aria-label="Chapters">
-                        <span>{{ $chapters->count() }}</span>
-                        <span class="pill-label">Chapters</span>
-                    </button>
-                </div>
             </section>
         </main>
 
@@ -194,10 +178,19 @@
                                 <span class="shrink-0 text-sm text-sand-400 tabular-nums">
                                     {{ gmdate($chapter['duration'] >= 3600 ? 'G:i:s' : 'i:s', (int) $chapter['duration']) }}
                                 </span>
+                                <span class="flex w-8 shrink-0 justify-end text-xs text-ember-400 tabular-nums" data-offline="{{ $index }}"></span>
                             </button>
                         </li>
                     @endforeach
                 </ol>
+
+                <div class="mt-3 hidden items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-3 text-sm [&:not(.hidden)]:flex" data-bind="offline">
+                    <span class="min-w-0 text-sand-300" data-bind="offline-status" aria-live="polite"></span>
+                    <span class="flex shrink-0 gap-2">
+                        <button type="button" data-action="download-all" class="tap rounded-full bg-ember-500 px-3 py-1.5 font-semibold text-night-950"></button>
+                        <button type="button" data-action="remove-downloads" class="tap hidden rounded-full px-3 py-1.5 text-sand-300 ring-1 ring-white/15">Remove</button>
+                    </span>
+                </div>
 
                 <p class="px-3 pt-4 text-xs text-sand-500">More chapters coming soon.</p>
             </div>

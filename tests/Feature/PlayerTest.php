@@ -34,6 +34,16 @@ class PlayerTest extends TestCase
             });
     }
 
+    public function test_player_knows_each_chapters_download_size(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('audio/'.config('audiobook.chapters.0.file'), str_repeat('a', 1234));
+
+        $this->get('/')
+            ->assertOk()
+            ->assertViewHas('chapters', fn ($chapters) => $chapters[0]['size'] === 1234 && $chapters[1]['size'] === null);
+    }
+
     public function test_every_configured_chapter_file_exists(): void
     {
         $disk = Storage::disk(config('audiobook.disk'));
@@ -45,6 +55,6 @@ class PlayerTest extends TestCase
 
     public function test_audio_files_are_not_publicly_accessible(): void
     {
-        $this->assertFileDoesNotExist(public_path('audio/chapter-01-europan-extraction.mp3'));
+        $this->assertFileDoesNotExist(public_path('audio/'.config('audiobook.chapters.0.file')));
     }
 }

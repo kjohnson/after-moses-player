@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class TextController extends Controller
@@ -31,10 +32,15 @@ class TextController extends Controller
 
     /**
      * Whether a chapter (numbered from 1) has synced text available.
+     *
+     * The folder is listed once and remembered for a few minutes, so the
+     * player doesn't check object storage for every chapter on every visit.
      */
     public static function exists(int $chapter): bool
     {
-        return Storage::disk(config('audiobook.disk'))->exists(self::path($chapter));
+        $paths = Cache::remember('audiobook:text-files', now()->addMinutes(5), fn () => Storage::disk(config('audiobook.disk'))->files('text'));
+
+        return in_array(self::path($chapter), $paths, true);
     }
 
     /**

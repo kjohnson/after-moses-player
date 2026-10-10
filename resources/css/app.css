@@ -37,18 +37,6 @@
         @apply outline-2 outline-offset-2 outline-ember-400;
     }
 
-    .pill {
-        @apply flex flex-col items-center rounded-2xl bg-white/5 py-2.5 font-semibold ring-1 ring-white/10;
-    }
-
-    .pill[data-active] {
-        @apply bg-ember-500/15 text-ember-400 ring-ember-500/40;
-    }
-
-    .pill-label {
-        @apply mt-0.5 text-[0.7rem] font-medium tracking-wide text-sand-400 uppercase;
-    }
-
     .chapter-row[aria-current='true'] {
         @apply bg-white/8;
     }

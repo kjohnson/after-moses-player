@@ -4,7 +4,11 @@ A mobile-first Laravel site for listening to *After Moses* by Michael F. Kane, n
 
 - Chapter list with per-chapter progress
 - Resume where you left off (saved in the browser's localStorage)
-- Back 15s / forward 30s, playback speed, sleep timer (minutes or end of chapter)
+- Back 15s / forward 30s
+- Follow-along text: the ebook's text with the spoken word highlighted (tap a word to jump there)
+- Works offline: the chapter that's playing and the next one are saved on the device automatically, and
+  "Save all" in the chapters menu saves the whole book. A service worker (`public/sw.js`) serves saved
+  chapters, including seeking, and keeps the player itself available without a connection.
 - Lock-screen and headphone controls via the Media Session API
 - Installable to the home screen (web app manifest)
 
@@ -30,6 +34,19 @@ composer run dev
    ffprobe -v error -show_entries format=duration -of csv=p=0 storage/app/private/audio/chapter-04-some-title.mp3
    ```
 
+## Follow-along text
+
+The ebook is `storage/app/private/ebook/After Moses.epub`. Put a WhisperX JSON transcript of each chapter in
+`storage/app/private/transcripts/`, named after its MP3, and run `php artisan audiobook:sync`:
+
+```sh
+whisperx storage/app/private/audio/chapter-04-the-hawthorne-pact.mp3 --model small.en --language en \
+    --compute_type int8 --output_format json --output_dir storage/app/private/transcripts
+php artisan audiobook:sync 4
+```
+
+The synced text lands in `storage/app/private/text/`. Chapters without it don't show the text button.
+
 ## Deploying to Laravel Cloud
 
 1. Push this repo to GitHub/GitLab/Bitbucket and create an application in Laravel Cloud.
@@ -39,12 +56,33 @@ composer run dev
 
 ### Hosting the audio in Object Storage (recommended as the book grows)
 
-The MP3s ship in the repo under `storage/app/private/audio` (~110 MB for three chapters), outside the
-web root. The player only receives signed links (`/audio/{chapter}?expires=…&signature=…`) that expire
-after `AUDIOBOOK_URL_LIFETIME` minutes (default 360), are rate limited, and are refused when opened
-directly in a browser tab or embedded on another site. To move the files out of the repo:
+The MP3s and synced text ship in the repo under `storage/app/private`, outside the web root. The player
+only receives signed links (`/audio/{chapter}?expires=…&signature=…`) that expire after
+`AUDIOBOOK_URL_LIFETIME` minutes (default 360), are rate limited, and are refused when opened directly in
+a browser tab or embedded on another site. To serve them from a bucket instead:
 
-1. Create a **private** Laravel Cloud Object Storage bucket, attach it to the app as a disk, and upload
-   the files into an `audio/` folder.
-2. Set `AUDIOBOOK_DISK` to that disk's name. Listeners are redirected to short-lived pre-signed URLs.
-3. Delete the files from `storage/app/private/audio` (and keep `config/audiobook.php` file names matching the bucket).
+1. Add a **private** Laravel Object Storage bucket to the environment and mark it as the **default disk**
+   (any disk name). Redeploy so the bucket's connection is injected. Listeners are then redirected to
+   short-lived pre-signed URLs.
+2. Copy one of the bucket's access keys (Organization > Resources > Object storage > your bucket >
+   Access keys > View credentials) into your local `.env`:
+
+   ```dotenv
+   AWS_ACCESS_KEY_ID=…
+   AWS_SECRET_ACCESS_KEY=…
+   AWS_BUCKET=…
+   AWS_ENDPOINT=…
+   AWS_DEFAULT_REGION=auto
+   ```
+
+3. Upload the files:
+
+   ```sh
+   php artisan audiobook:upload s3
+   ```
+
+   This copies `audio/*.mp3` and `text/*.json` from local storage into the same folders in the bucket,
+   skipping files that are already uploaded unchanged. Run it again after adding chapters or re-running
+   `audiobook:sync`. The player checks for new text every 5 minutes.
+
+`AUDIOBOOK_DISK` can name a disk other than the default, but isn't needed on Laravel Cloud.

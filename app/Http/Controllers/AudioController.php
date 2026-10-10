@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -20,7 +21,7 @@ class AudioController extends Controller
 
         abort_unless($this->isPlayerRequest($request, ['audio', 'video', 'empty']), 403);
 
-        $diskName = config('audiobook.disk');
+        $diskName = config('audiobook.disk') ?? config('filesystems.default');
         $disk = Storage::disk($diskName);
         $path = 'audio/'.$file;
 
@@ -50,6 +51,22 @@ class AudioController extends Controller
         return response()->json(['url' => self::signedUrl($chapter)])
             ->header('Cache-Control', 'no-store')
             ->header('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    /**
+     * The size in bytes of a chapter's audio (numbered from 1), or null if
+     * it's missing. Remembered per file so object storage isn't asked on
+     * every visit.
+     */
+    public static function size(int $chapter): ?int
+    {
+        $file = array_values(config('audiobook.chapters'))[$chapter - 1]['file'];
+
+        return Cache::remember("audiobook:audio-size:{$file}", now()->addDay(), function () use ($file): ?int {
+            $disk = Storage::disk(config('audiobook.disk'));
+
+            return $disk->exists('audio/'.$file) ? $disk->size('audio/'.$file) : null;
+        });
     }
 
     /**

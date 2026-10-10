@@ -13,7 +13,7 @@ class AudioTest extends TestCase
         parent::setUp();
 
         Storage::fake('local');
-        Storage::disk('local')->put('audio/chapter-01-europan-extraction.mp3', str_repeat('a', 1000));
+        Storage::disk('local')->put('audio/'.config('audiobook.chapters.0.file'), str_repeat('a', 1000));
     }
 
     /**
