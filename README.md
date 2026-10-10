@@ -28,11 +28,14 @@ composer run dev
 ## Adding chapters
 
 1. Drop the MP3 in `storage/app/private/audio/` (lowercase, no spaces, e.g. `chapter-04-some-title.mp3`).
+   The audio isn't committed to git; it's served from object storage.
 2. Add an entry to `chapters` in `config/audiobook.php` with its title and duration in seconds:
 
    ```sh
    ffprobe -v error -show_entries format=duration -of csv=p=0 storage/app/private/audio/chapter-04-some-title.mp3
    ```
+
+3. Upload it to the bucket with `php artisan audiobook:upload s3`.
 
 ## Follow-along text
 
@@ -54,12 +57,13 @@ The synced text lands in `storage/app/private/text/`. Chapters without it don't 
 3. Deploy command: leave empty (there are no migrations to run).
 4. Environment variables: `SESSION_DRIVER=cookie`, `CACHE_STORE=file` (no database needed).
 
-### Hosting the audio in Object Storage (recommended as the book grows)
+### Hosting the audio in Object Storage
 
-The MP3s and synced text ship in the repo under `storage/app/private`, outside the web root. The player
-only receives signed links (`/audio/{chapter}?expires=…&signature=…`) that expire after
-`AUDIOBOOK_URL_LIFETIME` minutes (default 360), are rate limited, and are refused when opened directly in
-a browser tab or embedded on another site. To serve them from a bucket instead:
+The MP3s are too large for the repo, so they live in a private bucket. Locally they sit in
+`storage/app/private/audio` (git-ignored), outside the web root. The player only receives signed links
+(`/audio/{chapter}?expires=…&signature=…`) that expire after `AUDIOBOOK_URL_LIFETIME` minutes (default 360),
+are rate limited, and are refused when opened directly in a browser tab or embedded on another site. To set
+up the bucket:
 
 1. Add a **private** Laravel Object Storage bucket to the environment and mark it as the **default disk**
    (any disk name). Redeploy so the bucket's connection is injected. Listeners are then redirected to

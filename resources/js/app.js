@@ -4,6 +4,7 @@ const FORWARD_SECONDS = 30;
 const FOLLOW_PAUSE_MS = 6000;
 
 const { book, chapters } = JSON.parse(document.getElementById('audiobook-data').textContent);
+const chapterCount = chapters.filter((chapter) => chapter.number).length;
 
 const audio = document.getElementById('audio');
 const sheet = document.getElementById('chapters');
@@ -114,7 +115,7 @@ function currentTime() {
 function renderChapter() {
     const chapter = chapters[state.chapter];
 
-    ui.chapterLabel.textContent = `Chapter ${chapter.number} of ${chapters.length}`;
+    ui.chapterLabel.textContent = chapter.number ? `Chapter ${chapter.number} of ${chapterCount}` : book.title;
     ui.chapterTitle.textContent = chapter.title;
     ui.next.disabled = state.chapter >= chapters.length - 1;
     document.title = `${chapter.title} — ${book.title}`;
@@ -527,7 +528,7 @@ function updateMediaSession() {
     const chapter = chapters[state.chapter];
 
     navigator.mediaSession.metadata = new MediaMetadata({
-        title: `Ch. ${chapter.number}: ${chapter.title}`,
+        title: chapter.number ? `Ch. ${chapter.number}: ${chapter.title}` : chapter.title,
         artist: book.author,
         album: book.title,
         artwork: [{ src: book.cover, sizes: '1024x1024', type: 'image/jpeg' }],
@@ -912,7 +913,7 @@ audio.addEventListener('ended', () => {
         selectChapter(state.chapter + 1, { autoplay: true, position: 0 });
     } else {
         save(true);
-        flash('The end — for now');
+        flash('The end');
     }
 });
 

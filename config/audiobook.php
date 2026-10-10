@@ -64,6 +64,9 @@ return [
     | any audio has been loaded. Get them with:
     | ffprobe -v error -show_entries format=duration -of csv=p=0 file.mp3
     |
+    | Set "numbered" to false for tracks that aren't chapters, like the
+    | credits, so they're listed without a chapter number.
+    |
     */
 
     'chapters' => [
@@ -96,6 +99,102 @@ return [
             'title' => 'Islands in the Night',
             'file' => 'chapter-06-islands-in-the-night.mp3',
             'duration' => 1583.73,
+        ],
+        [
+            'title' => 'Cold Approach',
+            'file' => 'chapter-07-cold-approach.mp3',
+            'duration' => 2023.89,
+        ],
+        [
+            'title' => 'Fagin’s Brigade',
+            'file' => 'chapter-08-fagins-brigade.mp3',
+            'duration' => 3767.20,
+        ],
+        [
+            'title' => 'The Titan’s Pride',
+            'file' => 'chapter-09-the-titans-pride.mp3',
+            'duration' => 2782.59,
+        ],
+        [
+            'title' => 'Grace Like Steel',
+            'file' => 'chapter-10-grace-like-steel.mp3',
+            'duration' => 2228.51,
+        ],
+        [
+            'title' => 'Between a Rock',
+            'file' => 'chapter-11-between-a-rock.mp3',
+            'duration' => 3117.12,
+        ],
+        [
+            'title' => 'The Shadow and the Void',
+            'file' => 'chapter-12-the-shadow-and-the-void.mp3',
+            'duration' => 4288.50,
+        ],
+        [
+            'title' => 'Whispers in the Dark',
+            'file' => 'chapter-13-whispers-in-the-dark.mp3',
+            'duration' => 3623.53,
+        ],
+        [
+            'title' => 'Matrons',
+            'file' => 'chapter-14-matrons.mp3',
+            'duration' => 2628.32,
+        ],
+        [
+            'title' => 'Murder in Mercy',
+            'file' => 'chapter-15-murder-in-mercy.mp3',
+            'duration' => 3839.27,
+        ],
+        [
+            'title' => 'Storms Past and Present',
+            'file' => 'chapter-16-storms-past-and-present.mp3',
+            'duration' => 2708.96,
+        ],
+        [
+            'title' => 'Fallout',
+            'file' => 'chapter-17-fallout.mp3',
+            'duration' => 3533.15,
+        ],
+        [
+            'title' => 'The Thresher of Oneiros',
+            'file' => 'chapter-18-the-thresher-of-oneiros.mp3',
+            'duration' => 2442.69,
+        ],
+        [
+            'title' => 'Tanker Throwdown',
+            'file' => 'chapter-19-tanker-throwdown.mp3',
+            'duration' => 2475.42,
+        ],
+        [
+            'title' => 'Inciting Incident',
+            'file' => 'chapter-20-inciting-incident.mp3',
+            'duration' => 2347.53,
+        ],
+        [
+            'title' => 'Villa María',
+            'file' => 'chapter-21-villa-maria.mp3',
+            'duration' => 4718.58,
+        ],
+        [
+            'title' => 'The Man in the Mirror',
+            'file' => 'chapter-22-the-man-in-the-mirror.mp3',
+            'duration' => 2343.31,
+        ],
+        [
+            'title' => 'Europan Extraction Redux',
+            'file' => 'chapter-23-europan-extraction-redux.mp3',
+            'duration' => 2612.98,
+        ],
+        [
+            'title' => 'The Guns of the Vatican',
+            'file' => 'chapter-24-the-guns-of-the-vatican.mp3',
+            'duration' => 3466.64,
+        ],
+        [
+            'title' => 'Credits and Thank You',
+            'file' => 'credits-and-thank-you.mp3',
+            'duration' => 31.98,
+            'numbered' => false,
         ],
     ],
 

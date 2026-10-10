@@ -1,6 +1,4 @@
 *
 !.gitignore
-!audio/
-!audio/*.mp3
 !text/
 !text/*.json

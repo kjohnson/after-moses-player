@@ -13,16 +13,20 @@ class PlayerController extends Controller
     {
         $book = config('audiobook');
 
+        $number = 0;
+
         $chapters = collect($book['chapters'])
             ->values()
-            ->map(fn (array $chapter, int $index) => [
-                'number' => $index + 1,
-                'title' => $chapter['title'],
-                'duration' => $chapter['duration'],
-                'url' => AudioController::signedUrl($index + 1),
-                'size' => AudioController::size($index + 1),
-                'hasText' => TextController::exists($index + 1),
-            ]);
+            ->map(function (array $chapter, int $index) use (&$number): array {
+                return [
+                    'number' => ($chapter['numbered'] ?? true) ? ++$number : null,
+                    'title' => $chapter['title'],
+                    'duration' => $chapter['duration'],
+                    'url' => AudioController::signedUrl($index + 1),
+                    'size' => AudioController::size($index + 1),
+                    'hasText' => TextController::exists($index + 1),
+                ];
+            });
 
         return view('player', [
             'book' => [

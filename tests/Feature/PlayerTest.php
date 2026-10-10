@@ -44,9 +44,26 @@ class PlayerTest extends TestCase
             ->assertViewHas('chapters', fn ($chapters) => $chapters[0]['size'] === 1234 && $chapters[1]['size'] === null);
     }
 
+    public function test_tracks_that_are_not_chapters_are_left_unnumbered(): void
+    {
+        config(['audiobook.chapters' => [
+            ['title' => 'One', 'file' => 'chapter-01-one.mp3', 'duration' => 10.0],
+            ['title' => 'Two', 'file' => 'chapter-02-two.mp3', 'duration' => 10.0],
+            ['title' => 'Credits', 'file' => 'credits.mp3', 'duration' => 10.0, 'numbered' => false],
+        ]]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertViewHas('chapters', fn ($chapters) => $chapters->pluck('number')->all() === [1, 2, null]);
+    }
+
     public function test_every_configured_chapter_file_exists(): void
     {
         $disk = Storage::disk(config('audiobook.disk'));
+
+        if (! $disk->directoryExists('audio')) {
+            $this->markTestSkipped('The audio files live in object storage and are not in this checkout.');
+        }
 
         foreach (config('audiobook.chapters') as $chapter) {
             $this->assertTrue($disk->exists('audio/'.$chapter['file']), "Missing audio/{$chapter['file']}");
