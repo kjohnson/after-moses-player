@@ -11,31 +11,38 @@ class PlayerController extends Controller
      */
     public function __invoke(): View
     {
-        $book = config('audiobook');
+        $books = collect(config('audiobook.books'))
+            ->map(function (array $book, string $slug): array {
+                $number = 0;
 
-        $number = 0;
-
-        $chapters = collect($book['chapters'])
-            ->values()
-            ->map(function (array $chapter, int $index) use (&$number): array {
                 return [
-                    'number' => ($chapter['numbered'] ?? true) ? ++$number : null,
-                    'title' => $chapter['title'],
-                    'duration' => $chapter['duration'],
-                    'url' => AudioController::signedUrl($index + 1),
-                    'size' => AudioController::size($index + 1),
-                    'hasText' => TextController::exists($index + 1),
+                    'slug' => $slug,
+                    'title' => $book['title'],
+                    'narrator' => $book['narrator'],
+                    'cover' => asset($book['cover']),
+                    'upcomingChapters' => $book['upcoming_chapters'] ?? [],
+                    'chapters' => collect($book['chapters'])
+                        ->values()
+                        ->map(function (array $chapter, int $index) use ($slug, &$number): array {
+                            return [
+                                'number' => ($chapter['numbered'] ?? true) ? ++$number : null,
+                                'title' => $chapter['title'],
+                                'duration' => $chapter['duration'],
+                                'url' => AudioController::signedUrl($slug, $index + 1),
+                                'size' => AudioController::size($slug, $index + 1),
+                                'hasText' => TextController::exists($slug, $index + 1),
+                            ];
+                        }),
                 ];
-            });
+            })
+            ->values();
 
         return view('player', [
-            'book' => [
-                'title' => $book['title'],
-                'author' => $book['author'],
-                'narrator' => $book['narrator'],
-                'cover' => asset($book['cover']),
+            'series' => [
+                'title' => config('audiobook.series'),
+                'author' => config('audiobook.author'),
             ],
-            'chapters' => $chapters,
+            'books' => $books,
         ]);
     }
 }

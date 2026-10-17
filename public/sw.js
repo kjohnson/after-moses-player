@@ -3,9 +3,11 @@
  *
  * - The page and its assets are kept in the "shell" cache, so the player opens offline.
  * - Chapters the player has downloaded live in the "audio" cache under
- *   /offline/audio/{chapter}, and are served from there (including the byte
- *   ranges the audio element asks for when seeking) whatever signature the
- *   request carries.
+ *   /offline/audio/{book}/{chapter}, and are served from there (including the
+ *   byte ranges the audio element asks for when seeking) whatever signature
+ *   the request carries. Pages from before there was more than one book ask
+ *   for /audio/{chapter}, which still finds what they saved, until the new
+ *   page has loaded and moved those chapters under the first book.
  * - Synced text is fetched from the network when possible and kept for offline use.
  */
 
@@ -46,11 +48,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    const audio = url.pathname.match(/^\/audio\/(\d+)$/);
+    const audio = url.pathname.match(/^\/audio\/((?:[a-z0-9-]+\/)?\d+)$/);
 
     if (audio) {
         event.respondWith(audioResponse(request, audio[1]));
-    } else if (/^\/text\/\d+$/.test(url.pathname)) {
+    } else if (/^\/text\/(?:[a-z0-9-]+\/)?\d+$/.test(url.pathname)) {
         event.respondWith(networkFirst(request, TEXT_CACHE, url.pathname));
     } else if (request.mode === 'navigate' && url.pathname === '/') {
         event.respondWith(networkFirst(request, SHELL_CACHE, '/', NAVIGATION_TIMEOUT_MS));
@@ -137,8 +139,8 @@ function withTimeout(promise, ms) {
  * Serve a downloaded chapter, answering Range requests with 206 responses so
  * the audio element can seek. Chapters that aren't downloaded go to the network.
  */
-async function audioResponse(request, chapter) {
-    const cached = await caches.match(`/offline/audio/${chapter}`, { cacheName: AUDIO_CACHE });
+async function audioResponse(request, key) {
+    const cached = await caches.match(`/offline/audio/${key}`, { cacheName: AUDIO_CACHE });
 
     if (!cached) {
         return fetch(request);

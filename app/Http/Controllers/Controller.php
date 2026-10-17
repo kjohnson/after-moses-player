@@ -7,14 +7,28 @@ use Illuminate\Http\Request;
 abstract class Controller
 {
     /**
+     * Resolve a book's configuration, or abort if the book doesn't exist.
+     *
+     * @return array{title: string, narrator: string, cover: string, ebook: string, upcoming_chapters?: array<int, string>, chapters: array<int, array{title: string, file: string, duration: float, epub?: string, numbered?: bool}>}
+     */
+    protected function bookConfig(string $book): array
+    {
+        $config = config("audiobook.books.{$book}");
+
+        abort_unless(is_array($config), 404);
+
+        return $config;
+    }
+
+    /**
      * Resolve a chapter's configuration (numbered from 1), or abort if the
      * chapter doesn't exist.
      *
-     * @return array{title: string, file: string, duration: float, epub?: string}
+     * @return array{title: string, file: string, duration: float, epub?: string, numbered?: bool}
      */
-    protected function chapterConfig(int $chapter): array
+    protected function chapterConfig(string $book, int $chapter): array
     {
-        $chapters = array_values(config('audiobook.chapters'));
+        $chapters = array_values($this->bookConfig($book)['chapters']);
 
         abort_unless(isset($chapters[$chapter - 1]), 404);
 

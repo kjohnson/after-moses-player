@@ -16,7 +16,7 @@ use RuntimeException;
 use Transliterator;
 use ZipArchive;
 
-#[Signature('audiobook:sync {chapter? : Only sync this chapter (numbered from 1)}')]
+#[Signature('audiobook:sync {book? : Only sync this book, e.g. "prince-caspian"} {chapter? : Only sync this chapter of the book (numbered from 1)}')]
 #[Description('Match the ebook text to WhisperX transcripts so the player can follow along')]
 class SyncAudiobookText extends Command
 {
@@ -47,22 +47,58 @@ class SyncAudiobookText extends Command
         $this->disk = Storage::disk(config('audiobook.disk'));
         $this->transliterator = Transliterator::create('Any-Latin; Latin-ASCII; Lower()');
 
-        $ebook = config('audiobook.ebook');
+        $books = config('audiobook.books');
+        $onlyBook = $this->argument('book');
+
+        if ($onlyBook !== null && ! isset($books[$onlyBook])) {
+            $this->components->error("Book [{$onlyBook}] doesn't exist.");
+
+            return self::FAILURE;
+        }
+
+        foreach ($books as $book => $details) {
+            if ($onlyBook !== null && $onlyBook !== $book) {
+                continue;
+            }
+
+            if ($details['chapters'] === []) {
+                $this->components->warn("{$details['title']} has no chapters yet, skipping.");
+
+                continue;
+            }
+
+            if (! $this->syncBook($book, $details, $this->argument('chapter'))) {
+                return self::FAILURE;
+            }
+        }
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Sync one book's chapters, or just one of them.
+     *
+     * @param  array{title: string, ebook: string, chapters: array<int, array{title: string, file: string, duration: float, epub?: string}>}  $details
+     */
+    private function syncBook(string $book, array $details, ?string $only): bool
+    {
+        $ebook = "{$book}/{$details['ebook']}";
 
         if (! $this->disk->exists($ebook)) {
             $this->components->error("Ebook not found at [{$ebook}].");
 
-            return self::FAILURE;
+            return false;
         }
 
-        $chapters = array_values(config('audiobook.chapters'));
-        $only = $this->argument('chapter');
+        $chapters = array_values($details['chapters']);
 
         if ($only !== null && ! isset($chapters[(int) $only - 1])) {
-            $this->components->error("Chapter [{$only}] doesn't exist.");
+            $this->components->error("{$details['title']} has no chapter [{$only}].");
 
-            return self::FAILURE;
+            return false;
         }
+
+        $this->components->info($details['title']);
 
         $sections = $this->readEbook($ebook);
 
@@ -73,7 +109,7 @@ class SyncAudiobookText extends Command
                 continue;
             }
 
-            $transcriptPath = 'transcripts/'.pathinfo($chapter['file'], PATHINFO_FILENAME).'.json';
+            $transcriptPath = "{$book}/transcripts/".pathinfo($chapter['file'], PATHINFO_FILENAME).'.json';
 
             if (! $this->disk->exists($transcriptPath)) {
                 $this->components->warn("Chapter {$number}: no transcript at [{$transcriptPath}], skipping.");
@@ -86,14 +122,14 @@ class SyncAudiobookText extends Command
             if ($section === null) {
                 $this->components->error("Chapter {$number}: couldn't find \"Chapter {$number}\" in the ebook. Set its \"epub\" key.");
 
-                return self::FAILURE;
+                return false;
             }
 
             $blocks = $this->extractBlocks($section['html']);
             $transcript = $this->readTranscript($transcriptPath);
             [$timings, $matched] = $this->align($blocks, $transcript, (float) $chapter['duration']);
 
-            $this->disk->put(TextController::path($number), json_encode(
+            $this->disk->put(TextController::path($book, $number), json_encode(
                 ['blocks' => $blocks, 'timings' => $timings],
                 JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
             ));
@@ -107,7 +143,7 @@ class SyncAudiobookText extends Command
             );
         }
 
-        return self::SUCCESS;
+        return true;
     }
 
     /**

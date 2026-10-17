@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Http\Controllers\AudioController;
 use App\Http\Controllers\TextController;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -9,7 +10,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
 #[Signature('audiobook:upload {disk : The disk to upload to, e.g. "s3" for the Laravel Cloud bucket} {--from=local : The disk holding the files}')]
-#[Description('Copy the chapter audio and synced text to object storage')]
+#[Description('Copy every book\'s chapter audio and synced text to object storage')]
 class UploadAudiobook extends Command
 {
     /**
@@ -28,11 +29,13 @@ class UploadAudiobook extends Command
 
         $paths = [];
 
-        foreach (array_values(config('audiobook.chapters')) as $index => $chapter) {
-            $paths[] = 'audio/'.$chapter['file'];
+        foreach (config('audiobook.books') as $book => $details) {
+            foreach (array_values($details['chapters']) as $index => $chapter) {
+                $paths[] = AudioController::path($book, $chapter['file']);
 
-            if ($from->exists(TextController::path($index + 1))) {
-                $paths[] = TextController::path($index + 1);
+                if ($from->exists(TextController::path($book, $index + 1))) {
+                    $paths[] = TextController::path($book, $index + 1);
+                }
             }
         }
 

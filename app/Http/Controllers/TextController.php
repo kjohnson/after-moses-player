@@ -12,14 +12,14 @@ class TextController extends Controller
     /**
      * Send a chapter's follow-along text and word timings to the player.
      */
-    public function show(Request $request, int $chapter): Response
+    public function show(Request $request, string $book, int $chapter): Response
     {
-        $this->chapterConfig($chapter);
+        $this->chapterConfig($book, $chapter);
 
         abort_unless($this->isPlayerRequest($request, ['empty']), 403);
 
         $disk = Storage::disk(config('audiobook.disk'));
-        $path = self::path($chapter);
+        $path = self::path($book, $chapter);
 
         abort_unless($disk->exists($path), 404);
 
@@ -36,18 +36,18 @@ class TextController extends Controller
      * The folder is listed once and remembered for a few minutes, so the
      * player doesn't check object storage for every chapter on every visit.
      */
-    public static function exists(int $chapter): bool
+    public static function exists(string $book, int $chapter): bool
     {
-        $paths = Cache::remember('audiobook:text-files', now()->addMinutes(5), fn () => Storage::disk(config('audiobook.disk'))->files('text'));
+        $paths = Cache::remember("audiobook:text-files:{$book}", now()->addMinutes(5), fn () => Storage::disk(config('audiobook.disk'))->files("{$book}/text"));
 
-        return in_array(self::path($chapter), $paths, true);
+        return in_array(self::path($book, $chapter), $paths, true);
     }
 
     /**
      * The disk path of a chapter's synced text (numbered from 1).
      */
-    public static function path(int $chapter): string
+    public static function path(string $book, int $chapter): string
     {
-        return sprintf('text/chapter-%02d.json', $chapter);
+        return sprintf('%s/text/chapter-%02d.json', $book, $chapter);
     }
 }

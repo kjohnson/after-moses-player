@@ -1,7 +1,7 @@
 {
     "name": "After Moses",
     "short_name": "After Moses",
-    "description": "Listen to After Moses by Michael F. Kane.",
+    "description": "Listen to the After Moses audiobooks by Michael F. Kane.",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",

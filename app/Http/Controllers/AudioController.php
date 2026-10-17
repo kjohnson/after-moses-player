@@ -15,15 +15,15 @@ class AudioController extends Controller
     /**
      * Stream a chapter's audio to the player.
      */
-    public function stream(Request $request, int $chapter): BinaryFileResponse|RedirectResponse
+    public function stream(Request $request, string $book, int $chapter): BinaryFileResponse|RedirectResponse
     {
-        $file = $this->chapterConfig($chapter)['file'];
+        $file = $this->chapterConfig($book, $chapter)['file'];
 
         abort_unless($this->isPlayerRequest($request, ['audio', 'video', 'empty']), 403);
 
         $diskName = config('audiobook.disk') ?? config('filesystems.default');
         $disk = Storage::disk($diskName);
-        $path = 'audio/'.$file;
+        $path = self::path($book, $file);
 
         if (config("filesystems.disks.{$diskName}.driver") !== 'local') {
             return redirect()->away($disk->temporaryUrl($path, now()->addMinutes(10)));
@@ -42,13 +42,13 @@ class AudioController extends Controller
     /**
      * Issue a fresh signed URL for a chapter whose previous URL has expired.
      */
-    public function refresh(Request $request, int $chapter): JsonResponse
+    public function refresh(Request $request, string $book, int $chapter): JsonResponse
     {
-        $this->chapterConfig($chapter);
+        $this->chapterConfig($book, $chapter);
 
         abort_unless($this->isPlayerRequest($request, ['empty']), 403);
 
-        return response()->json(['url' => self::signedUrl($chapter)])
+        return response()->json(['url' => self::signedUrl($book, $chapter)])
             ->header('Cache-Control', 'no-store')
             ->header('X-Robots-Tag', 'noindex, nofollow');
     }
@@ -58,26 +58,34 @@ class AudioController extends Controller
      * it's missing. Remembered per file so object storage isn't asked on
      * every visit.
      */
-    public static function size(int $chapter): ?int
+    public static function size(string $book, int $chapter): ?int
     {
-        $file = array_values(config('audiobook.chapters'))[$chapter - 1]['file'];
+        $path = self::path($book, array_values(config("audiobook.books.{$book}.chapters"))[$chapter - 1]['file']);
 
-        return Cache::remember("audiobook:audio-size:{$file}", now()->addDay(), function () use ($file): ?int {
+        return Cache::remember("audiobook:audio-size:{$path}", now()->addDay(), function () use ($path): ?int {
             $disk = Storage::disk(config('audiobook.disk'));
 
-            return $disk->exists('audio/'.$file) ? $disk->size('audio/'.$file) : null;
+            return $disk->exists($path) ? $disk->size($path) : null;
         });
     }
 
     /**
      * Build a temporary signed URL for a chapter (numbered from 1).
      */
-    public static function signedUrl(int $chapter): string
+    public static function signedUrl(string $book, int $chapter): string
     {
         return URL::temporarySignedRoute(
             'audio',
             now()->addMinutes(config('audiobook.url_lifetime')),
-            ['chapter' => $chapter],
+            ['book' => $book, 'chapter' => $chapter],
         );
+    }
+
+    /**
+     * The disk path of one of a book's audio files.
+     */
+    public static function path(string $book, string $file): string
+    {
+        return "{$book}/audio/{$file}";
     }
 }

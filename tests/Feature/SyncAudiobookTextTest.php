@@ -13,9 +13,29 @@ class SyncAudiobookTextTest extends TestCase
         parent::setUp();
 
         Storage::fake('local');
-        config(['audiobook.ebook' => 'ebook/Test Book.epub']);
+        config(['audiobook.books' => [
+            'test-book' => [
+                'title' => 'Test Book',
+                'ebook' => 'Test Book.epub',
+                'chapters' => [
+                    ['title' => 'Europan Extraction', 'file' => 'chapter-01-europan-extraction.mp3', 'duration' => 20.0],
+                    ['title' => 'Rings of Interference', 'file' => 'chapter-02-rings-of-interferance.mp3', 'duration' => 20.0],
+                ],
+            ],
+            'sequel' => [
+                'title' => 'Sequel',
+                'ebook' => 'sequel.epub',
+                'chapters' => [
+                    ['title' => 'Return', 'file' => 'chapter-01-return.mp3', 'duration' => 20.0],
+                ],
+            ],
+        ]]);
 
-        Storage::disk('local')->put('ebook/Test Book.epub', $this->makeEpub([
+        Storage::disk('local')->put('sequel/sequel.epub', $this->makeEpub([
+            'one.xhtml' => $this->xhtml('Chapter 1: Return', '<p>Back again.</p>'),
+        ]));
+
+        Storage::disk('local')->put('test-book/Test Book.epub', $this->makeEpub([
             'front.xhtml' => $this->xhtml('Contents', '<p>Chapter 1 starts on page one.</p>'),
             'one.xhtml' => $this->xhtml('Chapter 1: Europan Extraction', implode('', [
                 '<h2>Chapter 1: Europan Extraction</h2>',
@@ -96,8 +116,8 @@ class SyncAudiobookTextTest extends TestCase
 
         $this->artisan('audiobook:sync')->assertSuccessful();
 
-        Storage::disk('local')->assertExists('text/chapter-01.json');
-        Storage::disk('local')->assertMissing('text/chapter-02.json');
+        Storage::disk('local')->assertExists('test-book/text/chapter-01.json');
+        Storage::disk('local')->assertMissing('test-book/text/chapter-02.json');
     }
 
     public function test_a_single_chapter_can_be_synced(): void
@@ -105,25 +125,67 @@ class SyncAudiobookTextTest extends TestCase
         $this->putTranscript('chapter-01-europan-extraction', $this->spoken('chapter one'));
         $this->putTranscript('chapter-02-rings-of-interferance', $this->spoken('elsewhere'));
 
-        $this->artisan('audiobook:sync', ['chapter' => 2])->assertSuccessful();
+        $this->artisan('audiobook:sync', ['book' => 'test-book', 'chapter' => 2])->assertSuccessful();
 
-        Storage::disk('local')->assertMissing('text/chapter-01.json');
+        Storage::disk('local')->assertMissing('test-book/text/chapter-01.json');
         $this->assertSame([['tag' => 'p', 'words' => ['Elsewhere.']]], $this->synced(2)['blocks']);
     }
 
     public function test_a_chapter_can_point_at_a_specific_ebook_file(): void
     {
-        config(['audiobook.chapters.1.epub' => 'one.xhtml']);
+        config(['audiobook.books.test-book.chapters.1.epub' => 'one.xhtml']);
         $this->putTranscript('chapter-02-rings-of-interferance', $this->spoken('chapter one'));
 
-        $this->artisan('audiobook:sync', ['chapter' => 2])->assertSuccessful();
+        $this->artisan('audiobook:sync', ['book' => 'test-book', 'chapter' => 2])->assertSuccessful();
 
         $this->assertSame('Europan', $this->synced(2)['blocks'][0]['words'][2]);
     }
 
+    public function test_every_book_is_synced_into_its_own_folder(): void
+    {
+        $this->putTranscript('chapter-01-europan-extraction', $this->spoken('chapter one'));
+        $this->putTranscript('chapter-01-return', $this->spoken('back again'), 'sequel');
+
+        $this->artisan('audiobook:sync')->assertSuccessful();
+
+        $this->assertSame('Europan', $this->synced(1)['blocks'][0]['words'][2]);
+        $this->assertSame([['tag' => 'p', 'words' => ['Back', 'again.']]], $this->synced(1, 'sequel')['blocks']);
+    }
+
+    public function test_books_without_chapters_yet_are_skipped(): void
+    {
+        config(['audiobook.books.coming-soon' => ['title' => 'Coming Soon', 'ebook' => 'not-here-yet.epub', 'chapters' => []]]);
+        $this->putTranscript('chapter-01-europan-extraction', $this->spoken('chapter one'));
+
+        $this->artisan('audiobook:sync')->assertSuccessful();
+
+        Storage::disk('local')->assertExists('test-book/text/chapter-01.json');
+    }
+
+    public function test_a_single_book_can_be_synced(): void
+    {
+        $this->putTranscript('chapter-01-europan-extraction', $this->spoken('chapter one'));
+        $this->putTranscript('chapter-01-return', $this->spoken('back again'), 'sequel');
+
+        $this->artisan('audiobook:sync', ['book' => 'sequel'])->assertSuccessful();
+
+        Storage::disk('local')->assertExists('sequel/text/chapter-01.json');
+        Storage::disk('local')->assertMissing('test-book/text/chapter-01.json');
+    }
+
+    public function test_unknown_book_fails(): void
+    {
+        $this->artisan('audiobook:sync', ['book' => 'the-hobbit'])->assertFailed();
+    }
+
+    public function test_unknown_chapter_fails(): void
+    {
+        $this->artisan('audiobook:sync', ['book' => 'sequel', 'chapter' => 2])->assertFailed();
+    }
+
     public function test_missing_ebook_fails(): void
     {
-        config(['audiobook.ebook' => 'ebook/missing.epub']);
+        config(['audiobook.books.test-book.ebook' => 'missing.epub']);
 
         $this->artisan('audiobook:sync')->assertFailed();
     }
@@ -147,17 +209,17 @@ class SyncAudiobookTextTest extends TestCase
     /**
      * @param  array<string, mixed>  $transcript
      */
-    private function putTranscript(string $name, array $transcript): void
+    private function putTranscript(string $name, array $transcript, string $book = 'test-book'): void
     {
-        Storage::disk('local')->put("transcripts/{$name}.json", json_encode($transcript));
+        Storage::disk('local')->put("{$book}/transcripts/{$name}.json", json_encode($transcript));
     }
 
     /**
      * @return array{blocks: array<int, array{tag: string, words: array<int, string>}>, timings: array<int, float>}
      */
-    private function synced(int $chapter): array
+    private function synced(int $chapter, string $book = 'test-book'): array
     {
-        return json_decode(Storage::disk('local')->get(sprintf('text/chapter-%02d.json', $chapter)), true);
+        return json_decode(Storage::disk('local')->get(sprintf('%s/text/chapter-%02d.json', $book, $chapter)), true);
     }
 
     private function xhtml(string $title, string $body): string

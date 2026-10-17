@@ -1,4 +1,5 @@
 *
 !.gitignore
-!text/
-!text/*.json
+!*/
+!*/text/
+!*/text/*.json

@@ -1,20 +1,21 @@
+@php($book = $books->first())
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="theme-color" content="#120d1c">
-        <meta name="description" content="Listen to {{ $book['title'] }} by {{ $book['author'] }}, narrated by {{ $book['narrator'] }}.">
+        <meta name="description" content="Listen to the {{ $series['title'] }} audiobooks by {{ $series['author'] }}.">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="apple-mobile-web-app-title" content="{{ $book['title'] }}">
+        <meta name="apple-mobile-web-app-title" content="{{ $series['title'] }}">
 
-        <meta property="og:title" content="{{ $book['title'] }} — Audiobook">
-        <meta property="og:description" content="By {{ $book['author'] }}, narrated by {{ $book['narrator'] }}.">
+        <meta property="og:title" content="{{ $series['title'] }} — Audiobooks">
+        <meta property="og:description" content="By {{ $series['author'] }}.">
         <meta property="og:image" content="{{ $book['cover'] }}">
 
-        <title>{{ $book['title'] }} — Audiobook</title>
+        <title>{{ $series['title'] }} — Audiobooks</title>
 
         <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
         <link rel="icon" type="image/png" href="{{ asset('images/icon-192.png') }}">
@@ -25,12 +26,12 @@
     </head>
     <body class="min-h-dvh bg-night-950 text-sand-50 antialiased select-none">
         <script type="application/json" id="audiobook-data">
-            @json(['book' => $book, 'chapters' => $chapters])
+            @json(['series' => $series, 'books' => $books])
         </script>
 
         {{-- Blurred cover backdrop --}}
         <div aria-hidden="true" class="pointer-events-none fixed inset-0 overflow-hidden">
-            <img src="{{ $book['cover'] }}" alt="" class="absolute inset-0 size-full scale-125 object-cover opacity-30 blur-3xl">
+            <img src="{{ $book['cover'] }}" alt="" data-bind="backdrop" class="absolute inset-0 size-full scale-125 object-cover opacity-30 blur-3xl">
             <div class="absolute inset-0 bg-linear-to-b from-night-950/40 via-night-950/80 to-night-950"></div>
         </div>
 
@@ -40,8 +41,8 @@
         >
             <header class="flex items-center justify-between py-2">
                 <div class="min-w-0">
-                    <p class="text-xs font-medium tracking-[0.2em] text-sand-400 uppercase">Audiobook</p>
-                    <h1 class="truncate text-base font-semibold">{{ $book['title'] }}</h1>
+                    <p class="text-xs font-medium tracking-[0.2em] text-sand-400 uppercase" data-bind="book-label">Book 1</p>
+                    <h1 class="truncate text-base font-semibold" data-bind="book-title">{{ $book['title'] }}</h1>
                 </div>
                 <div class="-mr-2 flex items-center">
                     <button
@@ -57,7 +58,7 @@
                         type="button"
                         data-action="open-chapters"
                         class="tap flex size-11 items-center justify-center rounded-full text-sand-200"
-                        aria-label="Show chapters"
+                        aria-label="Show books and chapters"
                     >
                         <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
                     </button>
@@ -68,15 +69,16 @@
                 <img
                     src="{{ $book['cover'] }}"
                     alt="{{ $book['title'] }} cover art"
+                    data-bind="cover"
                     width="1024"
                     height="1024"
                     class="mx-auto aspect-square w-full max-w-[min(100%,48dvh)] rounded-2xl object-cover shadow-2xl shadow-black/60 ring-1 ring-white/10"
                 >
 
                 <div class="mt-7 text-center">
-                    <p class="text-sm font-medium text-ember-400" data-bind="chapter-label">Chapter 1 of {{ $chapters->count() }}</p>
-                    <h2 class="mt-1 text-2xl leading-tight font-semibold text-balance" data-bind="chapter-title">{{ $chapters->first()['title'] }}</h2>
-                    <p class="mt-1 text-sm text-sand-400">{{ $book['author'] }} · Read by {{ $book['narrator'] }}</p>
+                    <p class="text-sm font-medium text-ember-400" data-bind="chapter-label">{{ $book['chapters']->first()['number'] ? 'Chapter 1 of '.$book['chapters']->whereNotNull('number')->count() : $book['title'] }}</p>
+                    <h2 class="mt-1 text-2xl leading-tight font-semibold text-balance" data-bind="chapter-title">{{ $book['chapters']->first()['title'] }}</h2>
+                    <p class="mt-1 text-sm text-sand-400">{{ $series['author'] }} · Read by <span data-bind="narrator">{{ $book['narrator'] }}</span></p>
                 </div>
             </div>
 
@@ -105,7 +107,7 @@
                     <input
                         type="range"
                         min="0"
-                        max="{{ $chapters->first()['duration'] }}"
+                        max="{{ $book['chapters']->first()['duration'] }}"
                         step="1"
                         value="0"
                         data-bind="seek"
@@ -172,35 +174,70 @@
                     </form>
                 </div>
 
-                <ol class="space-y-1">
-                    @foreach ($chapters as $index => $chapter)
-                        <li>
+                @if ($books->count() > 1)
+                    <div class="-mx-4 mb-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="group" aria-label="Books">
+                        @foreach ($books as $listed)
                             <button
                                 type="button"
-                                data-chapter="{{ $index }}"
-                                class="tap chapter-row flex w-full items-center gap-4 rounded-xl px-3 py-3 text-left"
+                                data-show-book="{{ $listed['slug'] }}"
+                                aria-pressed="{{ $loop->first ? 'true' : 'false' }}"
+                                class="tap book-tab flex w-24 shrink-0 snap-start flex-col items-center gap-2 rounded-xl p-2 text-center"
                             >
-                                <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-sm font-semibold tabular-nums text-sand-300 chapter-number">
-                                    @if ($chapter['number'])
-                                        {{ $chapter['number'] }}
-                                    @else
-                                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                                    @endif
-                                </span>
-                                <span class="min-w-0 flex-1">
-                                    <span class="block truncate font-medium">{{ $chapter['title'] }}</span>
-                                    <span class="mt-1 block h-1 overflow-hidden rounded-full bg-white/10">
-                                        <span class="block h-full w-0 rounded-full bg-ember-400" data-progress="{{ $index }}"></span>
-                                    </span>
-                                </span>
-                                <span class="shrink-0 text-sm text-sand-400 tabular-nums">
-                                    {{ gmdate($chapter['duration'] >= 3600 ? 'G:i:s' : 'i:s', (int) $chapter['duration']) }}
-                                </span>
-                                <span class="flex w-8 shrink-0 justify-end text-xs text-ember-400 tabular-nums" data-offline="{{ $index }}"></span>
+                                <img src="{{ $listed['cover'] }}" alt="" width="1024" height="1024" loading="lazy" class="aspect-square w-full rounded-lg object-cover ring-1 ring-white/10 {{ $listed['chapters']->isEmpty() ? 'opacity-40' : '' }}">
+                                <span class="line-clamp-2 text-xs leading-snug font-medium">{{ $listed['title'] }}</span>
+                                @if ($listed['chapters']->isEmpty())
+                                    <span class="-mt-1 text-[0.7rem] font-semibold whitespace-nowrap text-ember-400">Coming soon</span>
+                                @endif
                             </button>
-                        </li>
-                    @endforeach
-                </ol>
+                        @endforeach
+                    </div>
+                @endif
+
+                @foreach ($books as $listed)
+                    @if ($listed['chapters']->isEmpty())
+                        <ol class="space-y-1 {{ $loop->first ? '' : 'hidden' }}" data-book-chapters="{{ $listed['slug'] }}" aria-label="{{ $listed['title'] }} chapters, coming soon">
+                            @foreach ($listed['upcomingChapters'] as $title)
+                                <li class="flex items-center gap-4 rounded-xl px-3 py-3 opacity-50">
+                                    <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-sm font-semibold tabular-nums text-sand-300">
+                                        {{ $loop->iteration }}
+                                    </span>
+                                    <span class="min-w-0 flex-1 truncate font-medium">{{ $title }}</span>
+                                </li>
+                            @endforeach
+                        </ol>
+                        @continue
+                    @endif
+                    <ol class="space-y-1 {{ $loop->first ? '' : 'hidden' }}" data-book-chapters="{{ $listed['slug'] }}" aria-label="{{ $listed['title'] }}">
+                        @foreach ($listed['chapters'] as $index => $chapter)
+                            <li>
+                                <button
+                                    type="button"
+                                    data-book="{{ $listed['slug'] }}"
+                                    data-chapter="{{ $index }}"
+                                    class="tap chapter-row flex w-full items-center gap-4 rounded-xl px-3 py-3 text-left"
+                                >
+                                    <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-sm font-semibold tabular-nums text-sand-300 chapter-number">
+                                        @if ($chapter['number'])
+                                            {{ $chapter['number'] }}
+                                        @else
+                                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                                        @endif
+                                    </span>
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block truncate font-medium">{{ $chapter['title'] }}</span>
+                                        <span class="mt-1 block h-1 overflow-hidden rounded-full bg-white/10">
+                                            <span class="block h-full w-0 rounded-full bg-ember-400" data-progress></span>
+                                        </span>
+                                    </span>
+                                    <span class="shrink-0 text-sm text-sand-400 tabular-nums">
+                                        {{ gmdate($chapter['duration'] >= 3600 ? 'G:i:s' : 'i:s', (int) $chapter['duration']) }}
+                                    </span>
+                                    <span class="flex w-8 shrink-0 justify-end text-xs text-ember-400 tabular-nums" data-offline></span>
+                                </button>
+                            </li>
+                        @endforeach
+                    </ol>
+                @endforeach
 
                 <div class="mt-3 hidden items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-3 text-sm [&:not(.hidden)]:flex" data-bind="offline">
                     <span class="min-w-0 text-sand-300" data-bind="offline-status" aria-live="polite"></span>

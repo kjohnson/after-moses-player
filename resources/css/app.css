@@ -45,6 +45,18 @@
         @apply bg-ember-500 text-night-950;
     }
 
+    .book-tab {
+        @apply text-sand-400;
+    }
+
+    .book-tab[aria-pressed='true'] {
+        @apply bg-white/8 text-sand-50;
+    }
+
+    .book-tab[aria-pressed='true'] img {
+        @apply ring-2 ring-ember-400;
+    }
+
     /* Range input styled as a progress bar with a thumb. */
     .scrubber {
         --progress: 0%;
