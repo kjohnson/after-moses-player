@@ -21,7 +21,7 @@ class PlayerController extends Controller
                     'label' => $book['label'],
                     'chapterName' => $book['chapter_name'] ?? 'Chapter',
                     'narrator' => $book['narrator'],
-                    'cover' => asset($book['cover']),
+                    'cover' => self::versionedAsset($book['cover']),
                     'upcomingChapters' => $book['upcoming_chapters'] ?? [],
                     'chapters' => collect($book['chapters'])
                         ->values()
@@ -46,5 +46,17 @@ class PlayerController extends Controller
             ],
             'books' => $books,
         ]);
+    }
+
+    /**
+     * The URL of a public file, with a short hash of its contents so a
+     * changed file gets a new URL. The service worker keeps images it has
+     * already saved, so an unchanged URL would keep showing the old one.
+     */
+    private static function versionedAsset(string $path): string
+    {
+        $file = public_path($path);
+
+        return is_file($file) ? asset($path).'?v='.substr(hash_file('xxh3', $file), 0, 8) : asset($path);
     }
 }
