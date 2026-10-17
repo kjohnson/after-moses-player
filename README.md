@@ -4,7 +4,7 @@ A mobile-first Laravel site for listening to the *After Moses* audiobooks by Mic
 Randy McCarten:
 
 1. *After Moses*
-2. *Prodigal* (coming soon)
+2. *Prodigal*
 
 - Books and chapter list with per-chapter progress; finishing a book carries on into the next
 - Resume where you left off (saved in the browser's localStorage)

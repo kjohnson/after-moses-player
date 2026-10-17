@@ -29,13 +29,31 @@ class PlayerTest extends TestCase
             ->assertViewHas('books', fn ($books) => $books->pluck('slug')->all() === ['after-moses', 'prodigal']);
     }
 
-    public function test_a_book_without_chapters_is_listed_as_coming_soon(): void
+    public function test_player_lists_prodigals_chapters(): void
     {
         $this->get('/')
             ->assertOk()
+            ->assertSee('A Rumor Bound in Journal')
+            ->assertSee('The Prodigal of Ceres')
+            ->assertDontSee('Coming soon');
+    }
+
+    public function test_a_book_without_chapters_is_listed_as_coming_soon(): void
+    {
+        config(['audiobook.books.book-three' => [
+            'title' => 'Book Three',
+            'narrator' => 'Randy McCarten',
+            'cover' => 'images/book-three.jpg',
+            'ebook' => 'Book Three.epub',
+            'chapters' => [],
+            'upcoming_chapters' => ['First Light', 'Second Wind'],
+        ]]);
+
+        $this->get('/')
+            ->assertOk()
             ->assertSee('Coming soon')
-            ->assertSeeInOrder(['A Rumor Bound in Journal', 'Beneath the Surface', 'The Prodigal of Ceres'])
-            ->assertViewHas('books', fn ($books) => $books->firstWhere('slug', 'prodigal')['chapters']->isEmpty());
+            ->assertSeeInOrder(['First Light', 'Second Wind'])
+            ->assertDontSee('data-book="book-three"', false);
     }
 
     public function test_player_links_to_signed_audio_urls_instead_of_files(): void
