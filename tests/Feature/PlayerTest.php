@@ -46,13 +46,32 @@ class PlayerTest extends TestCase
             });
     }
 
-    public function test_a_book_without_chapters_is_listed_as_coming_soon(): void
+    public function test_player_lists_prodigals_chapters(): void
     {
         $this->get('/')
             ->assertOk()
+            ->assertSee('A Rumor Bound in Journal')
+            ->assertSee('The Prodigal of Ceres')
+            ->assertDontSee('Coming soon');
+    }
+
+    public function test_a_book_without_chapters_is_listed_as_coming_soon(): void
+    {
+        config(['audiobook.books.book-three' => [
+            'title' => 'Book Three',
+            'label' => 'Book 3',
+            'narrator' => 'Randy McCarten',
+            'cover' => 'images/book-three.jpg',
+            'ebook' => 'Book Three.epub',
+            'chapters' => [],
+            'upcoming_chapters' => ['First Light', 'Second Wind'],
+        ]]);
+
+        $this->get('/')
+            ->assertOk()
             ->assertSee('Coming soon')
-            ->assertSeeInOrder(['A Rumor Bound in Journal', 'Beneath the Surface', 'The Prodigal of Ceres'])
-            ->assertViewHas('books', fn ($books) => $books->firstWhere('slug', 'prodigal')['chapters']->isEmpty());
+            ->assertSeeInOrder(['First Light', 'Second Wind'])
+            ->assertDontSee('data-book="book-three"', false);
     }
 
     public function test_cover_urls_change_when_the_cover_does(): void

@@ -5,7 +5,7 @@ Randy McCarten:
 
 1. *After Moses*
 2. *Splendid Sam*, the radio drama from inside the story: episode 387, "For a Dozen Quid of Platinum", read by Son of Sonnet
-3. *Prodigal* (coming soon)
+3. *Prodigal*
 
 - Books and chapter list with per-chapter progress; finishing a book carries on into the next
 - Resume where you left off (saved in the browser's localStorage)
