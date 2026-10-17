@@ -212,10 +212,19 @@ function chapterCount() {
     return chapters.filter((chapter) => chapter.number).length;
 }
 
+/**
+ * "Chapter 3 of 24", or just "Episode 387" for a book with only one.
+ */
+function chapterLabel(chapter) {
+    const count = chapterCount();
+
+    return count > 1 ? `${book.chapterName} ${chapter.number} of ${count}` : `${book.chapterName} ${chapter.number}`;
+}
+
 function renderChapter() {
     const chapter = chapters[state.chapter];
 
-    ui.chapterLabel.textContent = chapter.number ? `Chapter ${chapter.number} of ${chapterCount()}` : book.title;
+    ui.chapterLabel.textContent = chapter.number ? chapterLabel(chapter) : book.title;
     ui.chapterTitle.textContent = chapter.title;
     ui.bookLabel.textContent = book.label;
     ui.bookTitle.textContent = book.title;
@@ -737,7 +746,7 @@ function updateMediaSession() {
     const chapter = chapters[state.chapter];
 
     navigator.mediaSession.metadata = new MediaMetadata({
-        title: chapter.number ? `Ch. ${chapter.number}: ${chapter.title}` : chapter.title,
+        title: chapter.number ? `${book.chapterName === 'Chapter' ? 'Ch.' : book.chapterName} ${chapter.number}: ${chapter.title}` : chapter.title,
         artist: series.author,
         album: book.title,
         artwork: [{ src: book.cover, sizes: '1024x1024', type: 'image/jpeg' }],

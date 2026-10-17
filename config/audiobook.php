@@ -63,7 +63,9 @@ return [
     | ffprobe -v error -show_entries format=duration -of csv=p=0 file.mp3
     |
     | Set "numbered" to false for tracks that aren't chapters, like the
-    | credits, so they're listed without a chapter number.
+    | credits, so they're listed without a chapter number. A chapter's
+    | "number" can be set instead, and a book's "chapter_name" names its
+    | chapters (Splendid Sam's are "Episode 387", its number in the story).
     |
     */
 
@@ -208,12 +210,13 @@ return [
             'label' => 'Radio drama',
             'narrator' => 'Son of Sonnet',
             'cover' => 'images/splendid-sam.jpg',
+            'chapter_name' => 'Episode',
             'chapters' => [
                 [
-                    'title' => 'Episode 387: For a Dozen Quid of Platinum',
+                    'title' => 'For a Dozen Quid of Platinum',
                     'file' => 'episode-387-for-a-dozen-quid-of-platinum.mp3',
                     'duration' => 1413.14,
-                    'numbered' => false,
+                    'number' => 387,
                 ],
             ],
         ],

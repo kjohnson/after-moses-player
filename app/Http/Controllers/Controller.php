@@ -9,7 +9,7 @@ abstract class Controller
     /**
      * Resolve a book's configuration, or abort if the book doesn't exist.
      *
-     * @return array{title: string, label: string, narrator: string, cover: string, ebook?: string, upcoming_chapters?: array<int, string>, chapters: array<int, array{title: string, file: string, duration: float, epub?: string, numbered?: bool}>}
+     * @return array{title: string, label: string, narrator: string, cover: string, ebook?: string, chapter_name?: string, upcoming_chapters?: array<int, string>, chapters: array<int, array{title: string, file: string, duration: float, epub?: string, numbered?: bool, number?: int}>}
      */
     protected function bookConfig(string $book): array
     {
@@ -24,7 +24,7 @@ abstract class Controller
      * Resolve a chapter's configuration (numbered from 1), or abort if the
      * chapter doesn't exist.
      *
-     * @return array{title: string, file: string, duration: float, epub?: string, numbered?: bool}
+     * @return array{title: string, file: string, duration: float, epub?: string, numbered?: bool, number?: int}
      */
     protected function chapterConfig(string $book, int $chapter): array
     {

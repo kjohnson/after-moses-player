@@ -76,7 +76,7 @@
                 >
 
                 <div class="mt-7 text-center">
-                    <p class="text-sm font-medium text-ember-400" data-bind="chapter-label">{{ $book['chapters']->first()['number'] ? 'Chapter 1 of '.$book['chapters']->whereNotNull('number')->count() : $book['title'] }}</p>
+                    <p class="text-sm font-medium text-ember-400" data-bind="chapter-label">@php($numberedCount = $book['chapters']->whereNotNull('number')->count()){{ $book['chapters']->first()['number'] ? $book['chapterName'].' '.$book['chapters']->first()['number'].($numberedCount > 1 ? ' of '.$numberedCount : '') : $book['title'] }}</p>
                     <h2 class="mt-1 text-2xl leading-tight font-semibold text-balance" data-bind="chapter-title">{{ $book['chapters']->first()['title'] }}</h2>
                     <p class="mt-1 text-sm text-sand-400">{{ $series['author'] }} · Read by <span data-bind="narrator">{{ $book['narrator'] }}</span></p>
                 </div>

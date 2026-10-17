@@ -30,16 +30,19 @@ class PlayerTest extends TestCase
                 && $books->pluck('label')->all() === ['Book 1', 'Radio drama', 'Book 2']);
     }
 
-    public function test_splendid_sam_is_one_unnumbered_episode(): void
+    public function test_splendid_sam_is_listed_by_its_episode_number(): void
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('Episode 387: For a Dozen Quid of Platinum')
+            ->assertSee('For a Dozen Quid of Platinum')
+            ->assertDontSee('Episode 387: For a Dozen Quid of Platinum')
             ->assertSee('Son of Sonnet')
             ->assertViewHas('books', function ($books) {
-                $chapters = $books->firstWhere('slug', 'splendid-sam')['chapters'];
+                $book = $books->firstWhere('slug', 'splendid-sam');
 
-                return $chapters->count() === 1 && $chapters->first()['number'] === null;
+                return $book['chapterName'] === 'Episode'
+                    && $book['chapters']->count() === 1
+                    && $book['chapters']->first()['number'] === 387;
             });
     }
 

@@ -19,6 +19,7 @@ class PlayerController extends Controller
                     'slug' => $slug,
                     'title' => $book['title'],
                     'label' => $book['label'],
+                    'chapterName' => $book['chapter_name'] ?? 'Chapter',
                     'narrator' => $book['narrator'],
                     'cover' => asset($book['cover']),
                     'upcomingChapters' => $book['upcoming_chapters'] ?? [],
@@ -26,7 +27,7 @@ class PlayerController extends Controller
                         ->values()
                         ->map(function (array $chapter, int $index) use ($slug, &$number): array {
                             return [
-                                'number' => ($chapter['numbered'] ?? true) ? ++$number : null,
+                                'number' => $chapter['number'] ?? (($chapter['numbered'] ?? true) ? ++$number : null),
                                 'title' => $chapter['title'],
                                 'duration' => $chapter['duration'],
                                 'url' => AudioController::signedUrl($slug, $index + 1),
