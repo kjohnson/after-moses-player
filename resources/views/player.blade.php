@@ -41,7 +41,7 @@
         >
             <header class="flex items-center justify-between py-2">
                 <div class="min-w-0">
-                    <p class="text-xs font-medium tracking-[0.2em] text-sand-400 uppercase" data-bind="book-label">Book 1</p>
+                    <p class="text-xs font-medium tracking-[0.2em] text-sand-400 uppercase" data-bind="book-label">{{ $book['label'] }}</p>
                     <h1 class="truncate text-base font-semibold" data-bind="book-title">{{ $book['title'] }}</h1>
                 </div>
                 <div class="-mr-2 flex items-center">

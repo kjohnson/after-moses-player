@@ -162,6 +162,19 @@ class SyncAudiobookTextTest extends TestCase
         Storage::disk('local')->assertExists('test-book/text/chapter-01.json');
     }
 
+    public function test_books_without_an_ebook_are_skipped(): void
+    {
+        config(['audiobook.books.radio-drama' => ['title' => 'Radio Drama', 'chapters' => [
+            ['title' => 'Episode 1', 'file' => 'episode-01.mp3', 'duration' => 20.0],
+        ]]]);
+        $this->putTranscript('chapter-01-europan-extraction', $this->spoken('chapter one'));
+
+        $this->artisan('audiobook:sync')->assertSuccessful();
+
+        Storage::disk('local')->assertExists('test-book/text/chapter-01.json');
+        Storage::disk('local')->assertMissing('radio-drama/text/chapter-01.json');
+    }
+
     public function test_a_single_book_can_be_synced(): void
     {
         $this->putTranscript('chapter-01-europan-extraction', $this->spoken('chapter one'));

@@ -217,7 +217,7 @@ function renderChapter() {
 
     ui.chapterLabel.textContent = chapter.number ? `Chapter ${chapter.number} of ${chapterCount()}` : book.title;
     ui.chapterTitle.textContent = chapter.title;
-    ui.bookLabel.textContent = `Book ${books.indexOf(book) + 1}`;
+    ui.bookLabel.textContent = book.label;
     ui.bookTitle.textContent = book.title;
     ui.narrator.textContent = book.narrator;
     ui.next.disabled = followingChapter() === null;

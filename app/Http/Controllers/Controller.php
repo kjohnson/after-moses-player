@@ -9,7 +9,7 @@ abstract class Controller
     /**
      * Resolve a book's configuration, or abort if the book doesn't exist.
      *
-     * @return array{title: string, narrator: string, cover: string, ebook: string, upcoming_chapters?: array<int, string>, chapters: array<int, array{title: string, file: string, duration: float, epub?: string, numbered?: bool}>}
+     * @return array{title: string, label: string, narrator: string, cover: string, ebook?: string, upcoming_chapters?: array<int, string>, chapters: array<int, array{title: string, file: string, duration: float, epub?: string, numbered?: bool}>}
      */
     protected function bookConfig(string $book): array
     {

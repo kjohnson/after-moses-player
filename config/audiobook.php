@@ -42,9 +42,13 @@ return [
     |--------------------------------------------------------------------------
     |
     | In reading order. The key names the book's folder and appears in its
-    | URLs. Finishing a book carries on into the next. A book with no
-    | chapters yet is shown as coming soon, listing its "upcoming_chapters"
-    | titles.
+    | URLs. Finishing a book carries on into the next. The "label" shows
+    | above the book's title in the player. A book with no chapters yet is
+    | shown as coming soon, listing its "upcoming_chapters" titles.
+    |
+    | Splendid Sam is the radio drama from inside the story. Its episode
+    | comes from https://www.youtube.com/watch?v=rvICdYvcKwQ (Randy McCarten
+    | reads the commercials). It has no ebook, so it has no follow-along text.
     |
     | Running "php artisan audiobook:sync" matches each chapter's text in the
     | ebook against a WhisperX transcript of its audio (in "transcripts") and
@@ -66,6 +70,7 @@ return [
     'books' => [
         'after-moses' => [
             'title' => 'After Moses',
+            'label' => 'Book 1',
             'narrator' => 'Randy McCarten',
             'cover' => 'images/after-moses.jpg',
             'ebook' => 'After Moses.epub',
@@ -198,8 +203,23 @@ return [
                 ],
             ],
         ],
+        'splendid-sam' => [
+            'title' => 'Splendid Sam',
+            'label' => 'Radio drama',
+            'narrator' => 'Son of Sonnet',
+            'cover' => 'images/splendid-sam.jpg',
+            'chapters' => [
+                [
+                    'title' => 'Episode 387: For a Dozen Quid of Platinum',
+                    'file' => 'episode-387-for-a-dozen-quid-of-platinum.mp3',
+                    'duration' => 1413.14,
+                    'numbered' => false,
+                ],
+            ],
+        ],
         'prodigal' => [
             'title' => 'Prodigal',
+            'label' => 'Book 2',
             'narrator' => 'Randy McCarten',
             'cover' => 'images/prodigal.jpg',
             'ebook' => 'After Moses Prodigal.epub',

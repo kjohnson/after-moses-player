@@ -18,6 +18,7 @@ class PlayerController extends Controller
                 return [
                     'slug' => $slug,
                     'title' => $book['title'],
+                    'label' => $book['label'],
                     'narrator' => $book['narrator'],
                     'cover' => asset($book['cover']),
                     'upcomingChapters' => $book['upcoming_chapters'] ?? [],

@@ -25,8 +25,22 @@ class PlayerTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSeeInOrder(['After Moses', 'Prodigal'])
-            ->assertViewHas('books', fn ($books) => $books->pluck('slug')->all() === ['after-moses', 'prodigal']);
+            ->assertSeeInOrder(['After Moses', 'Splendid Sam', 'Prodigal'])
+            ->assertViewHas('books', fn ($books) => $books->pluck('slug')->all() === ['after-moses', 'splendid-sam', 'prodigal']
+                && $books->pluck('label')->all() === ['Book 1', 'Radio drama', 'Book 2']);
+    }
+
+    public function test_splendid_sam_is_one_unnumbered_episode(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Episode 387: For a Dozen Quid of Platinum')
+            ->assertSee('Son of Sonnet')
+            ->assertViewHas('books', function ($books) {
+                $chapters = $books->firstWhere('slug', 'splendid-sam')['chapters'];
+
+                return $chapters->count() === 1 && $chapters->first()['number'] === null;
+            });
     }
 
     public function test_a_book_without_chapters_is_listed_as_coming_soon(): void
@@ -68,13 +82,13 @@ class PlayerTest extends TestCase
     public function test_tracks_that_are_not_chapters_are_left_unnumbered(): void
     {
         config(['audiobook.books' => [
-            'first' => ['title' => 'First', 'narrator' => 'Reader', 'cover' => 'images/first.jpg', 'ebook' => 'first.epub', 'chapters' => [
+            'first' => ['title' => 'First', 'label' => 'Book 1', 'narrator' => 'Reader', 'cover' => 'images/first.jpg', 'ebook' => 'first.epub', 'chapters' => [
                 ['title' => 'Opening Credits', 'file' => 'opening-credits.mp3', 'duration' => 10.0, 'numbered' => false],
                 ['title' => 'One', 'file' => 'chapter-01-one.mp3', 'duration' => 10.0],
                 ['title' => 'Two', 'file' => 'chapter-02-two.mp3', 'duration' => 10.0],
                 ['title' => 'Credits', 'file' => 'credits.mp3', 'duration' => 10.0, 'numbered' => false],
             ]],
-            'second' => ['title' => 'Second', 'narrator' => 'Reader', 'cover' => 'images/second.jpg', 'ebook' => 'second.epub', 'chapters' => [
+            'second' => ['title' => 'Second', 'label' => 'Book 2', 'narrator' => 'Reader', 'cover' => 'images/second.jpg', 'ebook' => 'second.epub', 'chapters' => [
                 ['title' => 'One', 'file' => 'chapter-01-one.mp3', 'duration' => 10.0],
             ]],
         ]]);

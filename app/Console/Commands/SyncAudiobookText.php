@@ -67,6 +67,12 @@ class SyncAudiobookText extends Command
                 continue;
             }
 
+            if (! isset($details['ebook'])) {
+                $this->components->warn("{$details['title']} has no ebook to follow along with, skipping.");
+
+                continue;
+            }
+
             if (! $this->syncBook($book, $details, $this->argument('chapter'))) {
                 return self::FAILURE;
             }
@@ -78,7 +84,7 @@ class SyncAudiobookText extends Command
     /**
      * Sync one book's chapters, or just one of them.
      *
-     * @param  array{title: string, ebook: string, chapters: array<int, array{title: string, file: string, duration: float, epub?: string}>}  $details
+     * @param  array{title: string, ebook?: string, chapters: array<int, array{title: string, file: string, duration: float, epub?: string}>}  $details
      */
     private function syncBook(string $book, array $details, ?string $only): bool
     {
