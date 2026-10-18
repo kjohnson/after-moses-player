@@ -37,12 +37,20 @@
         @apply outline-2 outline-offset-2 outline-ember-400;
     }
 
-    .chapter-row[aria-current='true'] {
+    .chapter-item:has(> .chapter-row[aria-current='true']) {
         @apply bg-white/8;
     }
 
     .chapter-row[aria-current='true'] .chapter-number {
         @apply bg-ember-500 text-night-950;
+    }
+
+    .chapter-item:has([aria-expanded='true']) {
+        @apply bg-white/5;
+    }
+
+    .chapter-item:has([aria-expanded='true']) [data-chapter-options] {
+        @apply text-sand-50;
     }
 
     .book-tab {

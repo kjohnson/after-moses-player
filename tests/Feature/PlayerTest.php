@@ -74,6 +74,27 @@ class PlayerTest extends TestCase
             ->assertDontSee('data-book="book-three"', false);
     }
 
+    public function test_each_chapter_has_an_options_menu_for_its_progress(): void
+    {
+        config(['audiobook.books.book-three' => [
+            'title' => 'Book Three',
+            'label' => 'Book 3',
+            'narrator' => 'Randy McCarten',
+            'cover' => 'images/book-three.jpg',
+            'chapters' => [],
+            'upcoming_chapters' => ['First Light'],
+        ]]);
+
+        $response = $this->get('/')->assertOk();
+        $chapterCount = collect(config('audiobook.books'))->sum(fn (array $book): int => count($book['chapters']));
+
+        $this->assertSame($chapterCount, substr_count($response->getContent(), 'data-chapter-options='));
+        $this->assertSame($chapterCount, substr_count($response->getContent(), 'data-action="reset-progress"'));
+        $response->assertSeeInOrder(['aria-label="Options for Europan Extraction"', 'id="actions-after-moses-0"', 'Reset progress'], false)
+            ->assertSee('aria-controls="actions-prodigal-0"', false)
+            ->assertDontSee('data-options-book="book-three"', false);
+    }
+
     public function test_cover_urls_change_when_the_cover_does(): void
     {
         $hash = substr(hash_file('xxh3', public_path('images/splendid-sam.jpg')), 0, 8);

@@ -209,31 +209,47 @@
                     @endif
                     <ol class="space-y-1 {{ $loop->first ? '' : 'hidden' }}" data-book-chapters="{{ $listed['slug'] }}" aria-label="{{ $listed['title'] }}">
                         @foreach ($listed['chapters'] as $index => $chapter)
-                            <li>
-                                <button
-                                    type="button"
-                                    data-book="{{ $listed['slug'] }}"
-                                    data-chapter="{{ $index }}"
-                                    class="tap chapter-row flex w-full items-center gap-4 rounded-xl px-3 py-3 text-left"
-                                >
-                                    <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-sm font-semibold tabular-nums text-sand-300 chapter-number">
-                                        @if ($chapter['number'])
-                                            {{ $chapter['number'] }}
-                                        @else
-                                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                                        @endif
-                                    </span>
-                                    <span class="min-w-0 flex-1">
-                                        <span class="block truncate font-medium">{{ $chapter['title'] }}</span>
-                                        <span class="mt-1 block h-1 overflow-hidden rounded-full bg-white/10">
-                                            <span class="block h-full w-0 rounded-full bg-ember-400" data-progress></span>
+                            <li class="chapter-item rounded-xl">
+                                <div class="flex items-center">
+                                    <button
+                                        type="button"
+                                        data-book="{{ $listed['slug'] }}"
+                                        data-chapter="{{ $index }}"
+                                        class="tap chapter-row flex min-w-0 flex-1 items-center gap-4 rounded-xl py-3 pl-3 text-left"
+                                    >
+                                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-sm font-semibold tabular-nums text-sand-300 chapter-number">
+                                            @if ($chapter['number'])
+                                                {{ $chapter['number'] }}
+                                            @else
+                                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                                            @endif
                                         </span>
-                                    </span>
-                                    <span class="shrink-0 text-sm text-sand-400 tabular-nums">
-                                        {{ gmdate($chapter['duration'] >= 3600 ? 'G:i:s' : 'i:s', (int) $chapter['duration']) }}
-                                    </span>
-                                    <span class="flex w-8 shrink-0 justify-end text-xs text-ember-400 tabular-nums" data-offline></span>
-                                </button>
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate font-medium">{{ $chapter['title'] }}</span>
+                                            <span class="mt-1 block h-1 overflow-hidden rounded-full bg-white/10">
+                                                <span class="block h-full w-0 rounded-full bg-ember-400" data-progress></span>
+                                            </span>
+                                        </span>
+                                        <span class="shrink-0 text-sm text-sand-400 tabular-nums">
+                                            {{ gmdate($chapter['duration'] >= 3600 ? 'G:i:s' : 'i:s', (int) $chapter['duration']) }}
+                                        </span>
+                                        <span class="flex w-8 shrink-0 justify-end text-xs text-ember-400 tabular-nums" data-offline></span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        data-chapter-options="{{ $index }}"
+                                        data-options-book="{{ $listed['slug'] }}"
+                                        aria-expanded="false"
+                                        aria-controls="actions-{{ $listed['slug'] }}-{{ $index }}"
+                                        aria-label="Options for {{ $chapter['title'] }}"
+                                        class="tap flex size-11 shrink-0 items-center justify-center rounded-full text-sand-400"
+                                    >
+                                        <svg class="size-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="19" cy="12" r="1.75"/></svg>
+                                    </button>
+                                </div>
+                                <div id="actions-{{ $listed['slug'] }}-{{ $index }}" class="hidden justify-end gap-2 px-3 pb-3 [&:not(.hidden)]:flex" data-chapter-actions>
+                                    <button type="button" data-action="reset-progress" class="tap rounded-full px-3 py-1.5 text-sm text-sand-300 ring-1 ring-white/15">Reset progress</button>
+                                </div>
                             </li>
                         @endforeach
                     </ol>

@@ -1137,6 +1137,54 @@ function showBookInSheet(slug) {
     renderOffline();
 }
 
+function chapterPosition(slug, index) {
+    return slug === state.book && index === state.chapter ? currentTime() : state.progress[slug]?.positions?.[index] ?? 0;
+}
+
+/**
+ * Expand a chapter's row to show its actions, collapsing any other, or
+ * collapse it if it's already expanded.
+ */
+function toggleChapterActions(button) {
+    const expand = button.getAttribute('aria-expanded') !== 'true';
+
+    collapseChapterActions();
+
+    if (expand) {
+        const actions = document.getElementById(button.getAttribute('aria-controls'));
+
+        actions.querySelector('[data-action="reset-progress"]').disabled =
+            chapterPosition(button.dataset.optionsBook, Number(button.dataset.chapterOptions)) < 1;
+        actions.classList.remove('hidden');
+        button.setAttribute('aria-expanded', 'true');
+    }
+}
+
+function collapseChapterActions() {
+    document.querySelectorAll('[data-chapter-options][aria-expanded="true"]').forEach((button) => {
+        button.setAttribute('aria-expanded', 'false');
+        document.getElementById(button.getAttribute('aria-controls')).classList.add('hidden');
+    });
+}
+
+/**
+ * Start a chapter over from the beginning, the next time it's played or now
+ * if it's the one that's loaded.
+ */
+function resetChapter(slug, index) {
+    if (slug === state.book && index === state.chapter) {
+        seekTo(0);
+    }
+
+    if (state.progress[slug]?.positions) {
+        state.progress[slug].positions[index] = 0;
+    }
+
+    save(true);
+    renderTime();
+    renderChapterProgress();
+}
+
 // ---------------------------------------------------------------------------
 // Events
 // ---------------------------------------------------------------------------
@@ -1237,6 +1285,7 @@ document.addEventListener('click', (event) => {
     const action = event.target.closest('[data-action]')?.dataset.action;
     const chapterRow = event.target.closest('[data-chapter]');
     const bookTab = event.target.closest('[data-show-book]');
+    const optionsButton = event.target.closest('[data-chapter-options]');
     const word = event.target.closest('[data-w]');
 
     if (word && reader.timings) {
@@ -1252,6 +1301,12 @@ document.addEventListener('click', (event) => {
 
     if (bookTab) {
         showBookInSheet(bookTab.dataset.showBook);
+
+        return;
+    }
+
+    if (optionsButton) {
+        toggleChapterActions(optionsButton);
 
         return;
     }
@@ -1308,6 +1363,14 @@ document.addEventListener('click', (event) => {
         case 'remove-downloads':
             offline.all !== null ? stopDownloads() : removeDownloads();
             break;
+        case 'reset-progress': {
+            const options = event.target.closest('li').querySelector('[data-chapter-options]');
+
+            resetChapter(options.dataset.optionsBook, Number(options.dataset.chapterOptions));
+            collapseChapterActions();
+            options.focus();
+            break;
+        }
         case 'open-chapters':
             showBookInSheet(state.book);
             renderChapterProgress();
@@ -1334,6 +1397,8 @@ sheet.addEventListener('click', (event) => {
         sheet.close();
     }
 });
+
+sheet.addEventListener('close', collapseChapterActions);
 
 document.addEventListener('keydown', (event) => {
     if (sheet.open || event.target.matches('input, textarea')) {
