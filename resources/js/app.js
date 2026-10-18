@@ -1068,24 +1068,6 @@ function renderOffline() {
         return;
     }
 
-    document.querySelectorAll('[data-chapter]').forEach((row) => {
-        const el = row.querySelector('[data-offline]');
-        const key = chapterKey(row.dataset.book, Number(row.dataset.chapter));
-        const progress = offline.progress.get(key);
-
-        if (offline.saved.has(key)) {
-            el.innerHTML =
-                '<svg class="ml-auto size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
-            el.setAttribute('aria-label', 'Saved for offline');
-        } else if (progress !== undefined) {
-            el.textContent = `${Math.round(progress * 100)}%`;
-            el.setAttribute('aria-label', 'Saving for offline');
-        } else {
-            el.replaceChildren();
-            el.removeAttribute('aria-label');
-        }
-    });
-
     // The panel is about the book showing in the chapter sheet, and isn't needed for one that's coming soon.
     const slug = state.sheetBook;
     const keys = bookKeys(slug);

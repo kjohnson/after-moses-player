@@ -233,7 +233,6 @@
                                         <span class="shrink-0 text-sm text-sand-400 tabular-nums">
                                             {{ sprintf('%02d:%02d', intdiv((int) $chapter['duration'], 60), (int) $chapter['duration'] % 60) }}
                                         </span>
-                                        <span class="flex w-8 shrink-0 justify-end text-xs text-ember-400 tabular-nums" data-offline></span>
                                     </button>
                                     <button
                                         type="button"
