@@ -231,7 +231,7 @@
                                             </span>
                                         </span>
                                         <span class="shrink-0 text-sm text-sand-400 tabular-nums">
-                                            {{ gmdate($chapter['duration'] >= 3600 ? 'G:i:s' : 'i:s', (int) $chapter['duration']) }}
+                                            {{ sprintf('%02d:%02d', intdiv((int) $chapter['duration'], 60), (int) $chapter['duration'] % 60) }}
                                         </span>
                                         <span class="flex w-8 shrink-0 justify-end text-xs text-ember-400 tabular-nums" data-offline></span>
                                     </button>

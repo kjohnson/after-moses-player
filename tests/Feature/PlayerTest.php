@@ -95,6 +95,21 @@ class PlayerTest extends TestCase
             ->assertDontSee('data-options-book="book-three"', false);
     }
 
+    public function test_chapter_lengths_are_shown_in_minutes_and_seconds(): void
+    {
+        config(['audiobook.books' => [
+            'first' => ['title' => 'First', 'label' => 'Book 1', 'narrator' => 'Reader', 'cover' => 'images/first.jpg', 'chapters' => [
+                ['title' => 'Short', 'file' => 'short.mp3', 'duration' => 8.9],
+                ['title' => 'Medium', 'file' => 'medium.mp3', 'duration' => 2250.5],
+                ['title' => 'Long', 'file' => 'long.mp3', 'duration' => 4718.58],
+            ]],
+        ]]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSeeInOrder(['Short', '00:08', 'Medium', '37:30', 'Long', '78:38']);
+    }
+
     public function test_cover_urls_change_when_the_cover_does(): void
     {
         $hash = substr(hash_file('xxh3', public_path('images/splendid-sam.jpg')), 0, 8);
