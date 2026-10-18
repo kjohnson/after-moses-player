@@ -1075,7 +1075,7 @@ function renderOffline() {
 
         if (offline.saved.has(key)) {
             el.innerHTML =
-                '<svg class="ml-auto size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+                '<svg class="ml-auto size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
             el.setAttribute('aria-label', 'Saved for offline');
         } else if (progress !== undefined) {
             el.textContent = `${Math.round(progress * 100)}%`;
