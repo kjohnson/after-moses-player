@@ -163,7 +163,7 @@
 
         {{-- Chapter sheet --}}
         <dialog id="chapters" class="sheet" aria-labelledby="chapters-heading">
-            <div class="mx-auto max-w-md px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div class="mx-auto flex min-h-full max-w-md flex-col px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <div class="mx-auto mb-3 h-1.5 w-10 rounded-full bg-white/20" aria-hidden="true"></div>
                 <div class="flex items-center justify-between px-2 pb-2">
                     <h2 id="chapters-heading" class="text-lg font-semibold">Chapters</h2>
@@ -255,12 +255,15 @@
                     </ol>
                 @endforeach
 
-                <div class="mt-3 hidden items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-3 text-sm [&:not(.hidden)]:flex" data-bind="offline">
-                    <span class="min-w-0 text-sand-300" data-bind="offline-status" aria-live="polite"></span>
-                    <span class="flex shrink-0 gap-2">
-                        <button type="button" data-action="download-all" class="tap rounded-full bg-ember-500 px-3 py-1.5 font-semibold text-night-950"></button>
-                        <button type="button" data-action="remove-downloads" class="tap hidden rounded-full px-3 py-1.5 text-sand-300 ring-1 ring-white/15">Remove</button>
-                    </span>
+                {{-- At the bottom of the sheet, however few chapters the book has. --}}
+                <div class="mt-auto pt-3">
+                    <div class="hidden items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-3 text-sm [&:not(.hidden)]:flex" data-bind="offline">
+                        <span class="min-w-0 text-sand-300" data-bind="offline-status" aria-live="polite"></span>
+                        <span class="flex shrink-0 gap-2">
+                            <button type="button" data-action="download-all" class="tap rounded-full bg-ember-500 px-3 py-1.5 font-semibold text-night-950"></button>
+                            <button type="button" data-action="remove-downloads" class="tap hidden rounded-full px-3 py-1.5 text-sand-300 ring-1 ring-white/15">Remove</button>
+                        </span>
+                    </div>
                 </div>
             </div>
         </dialog>

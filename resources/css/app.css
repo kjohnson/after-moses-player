@@ -111,7 +111,7 @@
 
     /* Bottom sheet built on <dialog>. */
     .sheet {
-        @apply m-0 mt-auto max-h-[80dvh] w-full max-w-none overflow-y-auto rounded-t-3xl bg-night-900 text-sand-50 ring-1 ring-white/10;
+        @apply m-0 mt-auto h-[80dvh] max-h-[80dvh] w-full max-w-none overflow-y-auto rounded-t-3xl bg-night-900 text-sand-50 ring-1 ring-white/10;
         transform: translateY(100%);
         transition:
             transform 0.25s ease-out,
