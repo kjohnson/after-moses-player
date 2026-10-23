@@ -34,15 +34,14 @@ class PlayerTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('For a Dozen Quid of Platinum')
+            ->assertSeeInOrder(['For a Dozen Quid of Platinum', 'With Friends Like These'])
             ->assertDontSee('Episode 387: For a Dozen Quid of Platinum')
             ->assertSee('Son of Sonnet')
             ->assertViewHas('books', function ($books) {
                 $book = $books->firstWhere('slug', 'splendid-sam');
 
                 return $book['chapterName'] === 'Episode'
-                    && $book['chapters']->count() === 1
-                    && $book['chapters']->first()['number'] === 387;
+                    && $book['chapters']->pluck('number')->all() === [387, 388];
             });
     }
 

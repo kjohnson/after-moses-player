@@ -46,9 +46,11 @@ return [
     | above the book's title in the player. A book with no chapters yet is
     | shown as coming soon, listing its "upcoming_chapters" titles.
     |
-    | Splendid Sam is the radio drama from inside the story. Its episode
-    | comes from https://www.youtube.com/watch?v=rvICdYvcKwQ (Randy McCarten
-    | reads the commercials). It has no ebook, so it has no follow-along text.
+    | Splendid Sam is the radio drama from inside the story. Its episodes
+    | come from https://www.youtube.com/watch?v=rvICdYvcKwQ (387) and
+    | https://www.youtube.com/watch?v=uuDWff2OjKo (388, the classic audio
+    | version); Randy McCarten reads the commercials. It has no ebook, so it
+    | has no follow-along text.
     |
     | Running "php artisan audiobook:sync" matches each chapter's text in the
     | ebook against a WhisperX transcript of its audio (in "transcripts") and
@@ -217,6 +219,12 @@ return [
                     'file' => 'episode-387-for-a-dozen-quid-of-platinum.mp3',
                     'duration' => 1413.14,
                     'number' => 387,
+                ],
+                [
+                    'title' => 'With Friends Like These',
+                    'file' => 'episode-388-with-friends-like-these.mp3',
+                    'duration' => 1666.97,
+                    'number' => 388,
                 ],
             ],
         ],
